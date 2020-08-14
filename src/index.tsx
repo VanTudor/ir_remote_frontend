@@ -5,6 +5,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
+  // @ts-ignore
   <React.StrictMode>
     <App />
   </React.StrictMode>,
