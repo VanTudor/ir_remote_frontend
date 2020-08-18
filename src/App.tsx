@@ -1,10 +1,11 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import AssignCommandButton from './components/associateCommand';
 import EmitIRCodeComponent from './components/emitIRCode';
 import SimpleTable from './components/tables/irValuesTable';
 import { commandsColumns, irValuesColumns, remoteControlsColumns, remoteControlCommandValuesColumns } from './tableColumns';
-import { IFlattenedRemoteControlCommandValues, IRemoteControlCommandValues, IPaginatedResponse, IRemoteControl, ICommand, IIrValue, ITableDisplayable } from './utils/types';
+import { IFlattenedRemoteControlCommandValues, IRemoteControlCommandValues, IPaginatedResponse, IRemoteControl, ICommand, IIrValue, ITableDisplayable, ISelectedItems, ITablesList } from './utils/types';
 
 
 async function getPage<T>(baseUrl: string, page: number, perPage: number): Promise<IPaginatedResponse<T>> {
@@ -49,21 +50,6 @@ function flattenRemoteControlCommandValues(reqResponse: IPaginatedResponse<IRemo
     total: reqResponse.total
   };
 }
-
-export interface ISelectedItems {
-  irValue?: IIrValue; 
-  command?: ICommand;
-  remoteControl?: IRemoteControl;
-};
-
-export interface ITablesList {
-  irValue: boolean; 
-  command: boolean;
-  remoteControl: boolean;
-};
-
-// const useForceUpdate = () => useState()[1];
-
 
 function useForceUpdate(){
   const [value, setValue] = useState(0); // integer state
@@ -123,6 +109,7 @@ function App() {
       } else {
         throw new Error('Weird selection state reached. Just reload the page and it should be ok. And don\'t make that face; it\'s free software, dude.');
       }
+      console.log(selectedValues);
     };
   }
 
@@ -139,6 +126,7 @@ function App() {
 
   return (
     <div className="App">
+    <AssignCommandButton data={selectedValues}/>
     <SimpleTable 
       title={'Remote control command values'}
       columns={remoteControlCommandValuesColumns}

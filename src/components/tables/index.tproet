@@ -1,0 +1,184 @@
+// import React, { useMemo } from 'react';
+// import logo from './logo.svg';
+// import './App.css';
+// // import { storiesOf } from '@storybook/react';
+// import faker from 'faker';
+// // import Button from '../shared/Button';
+// import DataTable from 'react-data-table-component';
+// import FilterComponent from '../filterText';
+
+// const remotecontrols = useMemo(
+//   () => [
+//     {
+//       // first group - TV Show
+//       Header: "IR Values",
+//       name: 'irValues',
+//       // First group columns
+//       columns: [
+//         {
+//           Header: "id",
+//           accessor: "show.id",
+//         },
+//         {
+//           Header: "Name",
+//           accessor: "show.name"
+//         },
+//         {
+//           Header: "Description",
+//           accessor: "show.description"
+//         },
+//         {
+//           Header: "UpdatedAt",
+//           accessor: "show.updatedAt"
+//         },
+//         {
+//           Header: "CreatedAt",
+//           accessor: "show.createdAt"
+//         }
+//       ]
+//     }
+//   ],
+//   []
+// );
+
+// const commandsColumns = useMemo(
+//   () => [
+//     {
+//       Header: "Remote control Commands",
+//       name: 'remoteControlCommands',
+//       columns: [
+//         {
+//           Header: "id",
+//           accessor: "show.id",
+//         },
+//         {
+//           Header: "Name",
+//           accessor: "show.name"
+//         },
+//         {
+//           Header: "Description",
+//           accessor: "show.description"
+//         },
+//         {
+//           Header: "UpdatedAt",
+//           accessor: "show.updatedAt"
+//         },
+//         {
+//           Header: "CreatedAt",
+//           accessor: "show.createdAt"
+//         }
+//       ]
+//     }
+//   ],
+//   []
+// );
+
+// const createCommand = () => ({
+//   id: faker.random.uuid(),
+//   name: faker.name.findName(),
+//   description: faker.random.words(),
+//   updatedAt: faker.date.past(),
+//   createdAt: faker.date.past()
+// });
+
+// const createRemoteControl = () => ({
+//   id: faker.random.uuid(),
+//   name: faker.name.findName(),
+//   description: faker.random.words(),
+//   updatedAt: faker.date.past(),
+//   createdAt: faker.date.past()
+// });
+
+// const Button = <button/>;
+// const createCommands = (numUsers = 5) =>
+//   new Array(numUsers).fill(undefined).map(createCommand);
+// const createRemoteControls = (numUsers = 5) =>
+//   new Array(numUsers).fill(undefined).map(createRemoteControl);
+
+// const fakeCommands = createCommands(100);
+// const fakeRemoteControls = createRemoteControls(100);
+
+// function Tables() {
+//   const data = [
+//     {
+//       "score": 17.592657,
+//       "show": {
+//         "id": 44813,
+//         "url": "http://www.tvmaze.com/shows/44813/the-snow-spider",
+//         "name": "The Snow Spider",
+//         "type": "Scripted",
+//         "language": "English",
+//         "genres": [
+//           "Drama",
+//           "Fantasy"
+//         ],
+//         "status": "In Development",
+//         "runtime": 30,
+//         "premiered": null,
+//         "officialSite": null,
+//         "schedule": {
+//           "time": "",
+//           "days": []
+//         }
+//     },
+//   }
+// ];
+
+//   const [filterTextIRValues, filterTextCommands, filterTextRemoteControls, setFilterText] = React.useState('');
+//   const [resetPaginationToggle, setResetPaginationToggle] = React.useState(false);
+
+//   const filteredIRValues = fakeIRValues.filter((item: any) => item.value && item.value.toLowerCase().includes(filterTextIRValues.toLowerCase()));
+//   const filteredCommands = fakeCommands.filter((item: any) => item.name && item.name.toLowerCase().includes(filterTextRemoteControls.toLowerCase()));
+//   const filteredRemoteControls = fakeRemoteControls.filter((item: any) => item.name && item.name.toLowerCase().includes(filterTextRemoteControls.toLowerCase()));
+
+//   const irValuesSubHeaderComponentMemo = React.useMemo(() => {
+//     const handleClear = () => {
+//       if (filterTextIRValues) {
+//         setResetPaginationToggle(!resetPaginationToggle);
+//         setFilterText('');
+//       }
+//     };
+
+//     return <FilterComponent onFilter={(e: any) => setFilterText(e.target.value)} onClear={handleClear} filterText={filterText} />;
+//   }, [filterText, resetPaginationToggle]);
+
+//   return (
+//     <div className="Tables">
+//       <DataTable
+//         title="IR Values"
+//         columns={irValuesColumns}
+//         data={filteredItems}
+//         pagination
+//         paginationResetDefaultPage={resetPaginationToggle} // optionally, a hook to reset pagination to page 1
+//         subHeader
+//         subHeaderComponent={subHeaderComponentMemo}
+//         selectableRows
+//         persistTableHead
+//       />
+//       <DataTable
+//         title="Contact List"
+//         columns={commandsColumns}
+//         data={filteredItems}
+//         pagination
+//         paginationResetDefaultPage={resetPaginationToggle} // optionally, a hook to reset pagination to page 1
+//         subHeader
+//         subHeaderComponent={subHeaderComponentMemo}
+//         selectableRows
+//         persistTableHead
+//       />
+//       <DataTable
+//         title="Contact List"
+//         columns={remotecontrols}
+//         data={filteredItems}
+//         pagination
+//         paginationResetDefaultPage={resetPaginationToggle} // optionally, a hook to reset pagination to page 1
+//         subHeader
+//         subHeaderComponent={subHeaderComponentMemo}
+//         selectableRows
+//         persistTableHead
+//       />
+//     </div>
+//   );
+// }
+
+// export default Tables;
