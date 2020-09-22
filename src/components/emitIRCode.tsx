@@ -6,7 +6,7 @@ async function emitIRCode(irValue?: string): Promise<void> {
   if (!irValue) {
     throw new Error('Sum ting wong w irValue.');
   }
-  return await Axios.post(`http://localhost:3001/emitIrCode`, {
+  return await Axios.post(`http://localhost:3001/remoteControlEmulator/emitIrCode`, {
     value: irValue
   });
 }

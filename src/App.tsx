@@ -4,9 +4,36 @@ import './App.css';
 import AssignCommandButton from './components/associateCommand';
 import EmitIRCodeComponent from './components/emitIRCode';
 import SimpleTable from './components/tables/irValuesTable';
-import { commandsColumns, irValuesColumns, remoteControlsColumns, remoteControlCommandValuesColumns } from './tableColumns';
+import {
+  commandsColumns,
+  irValuesColumns,
+  remoteControlsColumns,
+  remoteControlCommandValuesColumns,
+  mandatoryIrValuesColumns,
+  mandatoryRemoteControlColumns, mandatoryCommandsColumns
+} from './tableColumns';
 import { IFlattenedRemoteControlCommandValues, IRemoteControlCommandValues, IPaginatedResponse, IRemoteControl, ICommand, IIrValue, ITableDisplayable, ISelectedItems, ITablesList } from './utils/types';
+import ToggleIrRecordingComponent from "./components/toggleIrRecording";
 
+async function createRemoteControl({ name, description }: { name: string, description: string }): Promise<void> {
+  await axios.post('http://localhost:3001/createRemoteControl', {
+    name,
+    description
+  });
+}
+
+async function createCommand({ name, description }: { name: string, description: string }): Promise<void> {
+  await axios.post('http://localhost:3001/createCommand', {
+    name,
+    description
+  });
+}
+
+async function createIrValue({ value }: { value: string }): Promise<void> {
+  await axios.post('http://localhost:3001/createIrValue', {
+    value
+  });
+}
 
 async function getPage<T>(baseUrl: string, page: number, perPage: number): Promise<IPaginatedResponse<T>> {
   const skipFirst = page * perPage;
@@ -21,16 +48,16 @@ async function getPage<T>(baseUrl: string, page: number, perPage: number): Promi
   return res.data;
 }
 
-function handleChangePage<TRequesModel>(
+function handleChangePage<TRequestModel>(
   baseUrl: string,
   perPage: number,
   setLoadingFunc: (value: boolean) => void,
   setDataFunc: (value: any) => void,
   setTotalFunc: (value: any) => void,
-  resultModifier?: (values: IPaginatedResponse<TRequesModel>) => IPaginatedResponse<any>) {
-    return async (page: number) => {
+  resultModifier?: (values: IPaginatedResponse<TRequestModel>) => IPaginatedResponse<any>) {
+    return async (page: number): Promise<void> => {
       setLoadingFunc(true);
-      let response = await getPage<TRequesModel>(baseUrl, page, perPage);
+      let response = await getPage<TRequestModel>(baseUrl, page, perPage);
       if (resultModifier) {
         response = resultModifier(response);
       }
@@ -127,6 +154,7 @@ function App() {
   return (
     <div className="App">
     <AssignCommandButton data={selectedValues}/>
+    <ToggleIrRecordingComponent />
     <SimpleTable 
       title={'Remote control command values'}
       columns={remoteControlCommandValuesColumns}
@@ -141,6 +169,7 @@ function App() {
         flattenRemoteControlCommandValues)}
       expandableRows
       expandableRowsComponent={<EmitIRCodeComponent />}
+      tablePageFetcher={handleChangePage('http://localhost:3001/remoteControlCommandValues', remoteControlCommandValuesPerPage, setRemoteControlCommandValuesLoading, setRemoteControlCommandValues, setRemoteControlCommandValuesTotalRows, flattenRemoteControlCommandValues)}
     />
     <SimpleTable 
       title={'IR Values'}
@@ -151,6 +180,13 @@ function App() {
       onChangePage={handleChangePage<IIrValue>('http://localhost:3001/irValues', irValuesPerPage, setIrValuesLoading, setIrValues, setIrValuesTotalRows)}
       selectableRowDisabled={determineDisabledRows('irValue')}
       onSelectedRowsChange={handleSelectedItems('irValue', irValues, setIrValues)}
+      tablePageFetcher={handleChangePage('http://localhost:3001/irValues', irValuesPerPage, setIrValuesLoading, setIrValues, setIrValuesTotalRows)}
+      createEntity={{
+        entityName: 'IR Value',
+        fields: mandatoryIrValuesColumns,
+        tableDataFetcher: handleChangePage('http://localhost:3001/irValues', irValuesPerPage, setIrValuesLoading, setIrValues, setIrValuesTotalRows),
+        tableDataSender: createIrValue,
+      }}
     />
     <SimpleTable 
       title={'Commands'}
@@ -161,6 +197,13 @@ function App() {
       onChangePage={handleChangePage<ICommand>('http://localhost:3001/commands', remoteControlsPerPage, setCommandsLoading, setCommands, setCommandsTotalRows)}
       selectableRowDisabled={determineDisabledRows('command')}
       onSelectedRowsChange={handleSelectedItems('command', commands, setCommands)}
+      tablePageFetcher={handleChangePage('http://localhost:3001/commands', commandsPerPage, setCommandsLoading, setCommands, setCommandsTotalRows)}
+      createEntity={{
+        entityName: 'Remote control command',
+        fields: mandatoryCommandsColumns,
+        tableDataFetcher: handleChangePage('http://localhost:3001/commands', commandsPerPage, setCommandsLoading, setCommands, setCommandsTotalRows),
+        tableDataSender: createCommand,
+      }}
     />
     <SimpleTable 
       title={'Remote controls'}
@@ -171,6 +214,13 @@ function App() {
       onChangePage={handleChangePage<IRemoteControl>('http://localhost:3001/remoteControls', commandsPerPage, setRemoteControlsLoading, setRemoteControls, setRemoteControlsTotalRows)}
       selectableRowDisabled={determineDisabledRows('remoteControl')}
       onSelectedRowsChange={handleSelectedItems('remoteControl', remoteControls, setRemoteControls)}
+      tablePageFetcher={handleChangePage('http://localhost:3001/remoteControls', remoteControlsPerPage, setRemoteControlsLoading, setRemoteControls, setRemoteControlsTotalRows)}
+      createEntity={{
+        entityName: 'Remote control',
+        fields: mandatoryRemoteControlColumns,
+        tableDataFetcher: handleChangePage('http://localhost:3001/remoteControls', remoteControlsPerPage, setRemoteControlsLoading, setRemoteControls, setRemoteControlsTotalRows),
+        tableDataSender: createRemoteControl,
+      }}
     />
     </div>
   );

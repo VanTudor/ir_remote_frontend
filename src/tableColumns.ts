@@ -1,92 +1,120 @@
-export const irValuesColumns = [
-  {
-    name: "id",
-    selector: "id",
-    sortable: true
-  },
+import { IColumnField } from "./utils/types";
+
+export const mandatoryIrValuesColumns: IColumnField[] = [
   {
     name: "Value",
     selector: "value",
-    sortable: true
+    sortable: true,
+    type: 'text'
+  }
+];
+export const irValuesColumns: IColumnField[] = [
+  {
+    name: "id",
+    selector: "id",
+    sortable: true,
+    type: 'text'
   },
+  ...mandatoryIrValuesColumns,
   {
     name: "UpdatedAt",
     selector: "updatedAt",
-    sortable: true
+    sortable: true,
+    type: 'text'
   },
   {
     name: "CreatedAt",
     selector: "createdAt",
-    sortable: true
+    sortable: true,
+    type: 'text'
   }
 ];
 
-export const commandsColumns = [
-  {
-    name: "id",
-    selector: "id",
-    sortable: true
-  },
+export const mandatoryCommandsColumns: IColumnField[] = [
   {
     name: "Name",
     selector: "name",
-    sortable: true
+    sortable: true,
+    type: 'text'
   },
   {
     name: "Description",
     selector: "description",
-    sortable: true
+    sortable: true,
+    type: 'text'
+  }
+];
+
+export const commandsColumns: IColumnField[] = [
+  {
+    name: "id",
+    selector: "id",
+    sortable: true,
+    type: 'text'
   },
+  ...mandatoryCommandsColumns,
   {
     name: "UpdatedAt",
     selector: "updatedAt",
-    sortable: true
+    sortable: true,
+    type: 'text'
   },
   {
     name: "CreatedAt",
     selector: "createdAt",
-    sortable: true
+    sortable: true,
+    type: 'text'
   }
 ];
 
-export const remoteControlsColumns = [
-  {
-    name: "id",
-    selector: "id",
-    sortable: true
-  },
+export const mandatoryRemoteControlColumns: IColumnField[] = [
   {
     name: "Name",
     selector: "name",
-    sortable: true
+    sortable: true,
+    type: 'text'
   },
   {
     name: "Description",
     selector: "description",
-    sortable: true
+    sortable: true,
+    type: 'text'
+  }
+];
+
+export const remoteControlsColumns: IColumnField[] = [
+  {
+    name: "id",
+    selector: "id",
+    sortable: true,
+    type: 'text'
   },
+  ...mandatoryRemoteControlColumns,
   {
     name: "UpdatedAt",
     selector: "updatedAt",
-    sortable: true
+    sortable: true,
+    type: 'text'
   },
   {
     name: "CreatedAt",
     selector: "createdAt",
-    sortable: true
+    sortable: true,
+    type: 'text'
   }
 ];
 
-
-export const remoteControlCommandValuesColumns = [
+export const remoteControlCommandValuesColumns: IColumnField[] = [
   {
     name: "Command Name",
     selector: "commandName",
-    sortable: true
+    sortable: true,
+    type: 'text'
   },
   {
     name: "Remote Name",
     selector: "remoteControlName",
-    sortable: true
+    sortable: true,
+    type: 'text'
   }
 ];

@@ -1,6 +1,9 @@
 import React from 'react';
 import DataTable from 'react-data-table-component';
 import styled from 'styled-components';
+import RefreshTableButton from '../refreshTableButton';
+import CreateEntity from '../createEntity';
+import { ICreateEntityField, ICreateEntityProps } from '../../utils/types';
 
 const ClearButton = styled.button`
   border-top-left-radius: 0;
@@ -58,8 +61,10 @@ export interface ITableProps<T> {
     selectedRows: T[]; // TODO: stop being a lazy f*ck
   }) => void;
   selectableRowDisabled?: (row: T) => boolean;
-};
-// item[prev.selector] && item[prev.selector].reduce &&
+  tablePageFetcher: (page: number) => Promise<void>;
+  createEntity?: ICreateEntityProps
+}
+
 function SimpleTable<T>({
     title,
     columns,
@@ -70,7 +75,9 @@ function SimpleTable<T>({
     expandableRows,
     expandableRowsComponent,
     onSelectedRowsChange,
-    selectableRowDisabled
+    selectableRowDisabled,
+    tablePageFetcher,
+    createEntity
   }: ITableProps<T>) {
   const [filterText, setFilterText] = React.useState('');
   const [resetPaginationToggle, setResetPaginationToggle] = React.useState(false);
@@ -93,25 +100,37 @@ function SimpleTable<T>({
   }, [filterText, resetPaginationToggle]);
 
   return(
-      <DataTable
-        title={title}
-        columns={columns}
-        data={filteredItems}
-        progressPending={progressPending}
-        pagination
-        paginationServer
-        paginationResetDefaultPage={resetPaginationToggle} // optionally, a hook to reset pagination to page 1
-        subHeader
-        subHeaderComponent={subHeaderComponentMemo}
-        selectableRows
-        persistTableHead
-        paginationTotalRows={paginationTotalRows}
-        onChangePage={onChangePage}
-        expandableRows={expandableRows}
-        expandableRowsComponent={expandableRowsComponent}
-        onSelectedRowsChange={onSelectedRowsChange}
-        selectableRowDisabled={selectableRowDisabled}
-      />
+      <div>
+          <RefreshTableButton tableDataFetcher={() => tablePageFetcher(0)} />
+          { createEntity 
+            ? <CreateEntity 
+                entityName={createEntity.entityName} 
+                fields={createEntity.fields} 
+                tableDataFetcher={createEntity.tableDataFetcher} 
+                tableDataSender={createEntity.tableDataSender}
+              /> 
+            : ''
+          }
+          <DataTable
+            title={title}
+            columns={columns}
+            data={filteredItems}
+            progressPending={progressPending}
+            pagination
+            paginationServer
+            paginationResetDefaultPage={resetPaginationToggle} // optionally, a hook to reset pagination to page 1
+            subHeader
+            subHeaderComponent={subHeaderComponentMemo}
+            selectableRows
+            persistTableHead
+            paginationTotalRows={paginationTotalRows}
+            onChangePage={onChangePage}
+            expandableRows={expandableRows}
+            expandableRowsComponent={expandableRowsComponent}
+            onSelectedRowsChange={onSelectedRowsChange}
+            selectableRowDisabled={selectableRowDisabled}
+          />
+      </div>
   );
 }
 
