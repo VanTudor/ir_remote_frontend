@@ -20,5 +20,6 @@ export interface IBonjourService {
   txt: {
     chipid: string;
     type: "esp8266RemoteEmulator" | string;
+    registered: string; // should be boolean but mdns only lets us store strings here
   };
 }

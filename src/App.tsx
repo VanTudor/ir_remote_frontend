@@ -2,7 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import './App.css';
 import RemoteControlEmulatorsScanner from "./components/RemoteControlEmulatorsScanner";
-
+import TopMenu from "./components/TopMenu";
 async function createRemoteControl({ name, description }: { name: string, description: string }): Promise<void> {
   await axios.post('http://localhost:3001/createRemoteControl', {
     name,
@@ -18,7 +18,7 @@ function useForceUpdate(){
 function App() {
   return (
     <div className="App">
-      <RemoteControlEmulatorsScanner />
+      <TopMenu />
     </div>
   );
 }

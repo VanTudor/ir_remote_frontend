@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Accordion, Button, Form, List, Menu, Segment } from "semantic-ui-react";
+import { Accordion, Button, Form, List, Menu, Segment, Grid } from "semantic-ui-react";
 import socketIOClient from "socket.io-client";
+import { createRemoteControl } from "../requests/requests";
+import { stringBoolToBool } from "../utils";
 import { IBonjourServiceWithLastSeen, IDictionary } from "./Types";
 
 const SocketIOEndpoint = "http://127.0.0.1:3001";
-
-function validateForm() {
-
-}
 
 interface IRegisterDeviceFormState {
   name: string;
@@ -33,6 +31,46 @@ function RemoteControlEmulatorsScanner() {
     const { index } = titleProps;
     const newIndex = accordionActiveIndex === index ? -1 : index
     setAccordionActiveIndex(newIndex);
+  };
+
+  const handleRegisterRemoteEmulatorClick = (deviceId: string) => async (e: { preventDefault: () => void; }, data: any) => {
+    e.preventDefault();
+    console.log(espDevicesAvailable[deviceId]);
+    console.log(registerDeviceFormState[deviceId]);
+    await createRemoteControl(registerDeviceFormState[deviceId].name, registerDeviceFormState[deviceId].description, espDevicesAvailable[deviceId].host);
+  }
+
+  function generateDevice(espDevice: IBonjourServiceWithLastSeen, itemIndex: number) {
+    return (
+      <Segment>
+        <List>
+          <List.Item>
+            <List.Content>
+              <List.Header>Name: {espDevice.name}</List.Header>
+              <List.Description>Host: {espDevice.host}</List.Description>
+              <List.Description>Ip addresses: <ul>{espDevice.addresses.map(addr => (<li>{addr}</li>))}</ul></List.Description>
+              <List.Description>Chip ID: {espDevice.txt.chipid}</List.Description>
+              <List.Description>Registered: {espDevice.txt.registered}</List.Description>
+            </List.Content>
+          </List.Item>
+        </List>
+        <Accordion vertical>
+          <div>
+            <Accordion.Title
+              active={accordionActiveIndex === itemIndex}
+              content={(stringBoolToBool(espDevice.txt.registered) ? 'Edit' : 'Register') + ' remote control emulator'}
+              index={itemIndex}
+              onClick={handleAccordionClick}
+            />
+            <Accordion.Content
+              active={accordionActiveIndex === itemIndex}
+              content={SizeForm(espDevice.name, espDevice.txt.chipid)}
+            />
+          </div>
+        </Accordion>
+        {stringBoolToBool(espDevice.txt.registered) && <Button color="red">Delete</Button>}
+      </Segment>
+    );
   }
 
   const SizeForm = (deviceName: string, deviceId: string) => {
@@ -50,8 +88,6 @@ function RemoteControlEmulatorsScanner() {
               formDeviceState.name = e.target.value;
               registerDeviceFormState[deviceId] = formDeviceState;
               setRegisterDeviceFormState(registerDeviceFormState);
-              console.log(e.target.value);
-              console.log(formDeviceState)
             }}/>
           <Form.Input
             fluid
@@ -59,48 +95,34 @@ function RemoteControlEmulatorsScanner() {
             placeholder='Description'
             error={formDeviceState.description ? false : "Please enter a description"}
             onChange={(e) => {
-              console.log(e.target.value);
               formDeviceState.description = e.target.value;
               registerDeviceFormState[deviceId] = formDeviceState;
               setRegisterDeviceFormState(registerDeviceFormState);
             }}
           />
         </Form.Group>
-        <Form.Button fluid>Submit</Form.Button>
+        <Form.Button fluid onClick={handleRegisterRemoteEmulatorClick(deviceId)}>Submit</Form.Button>
       </Form>
     );
   }
 
   return(
     <Segment loading={!Boolean(Object.keys(espDevicesAvailable).length)}>
-      <h2>List of devices unregistered devices</h2>
-        {Object.keys(espDevicesAvailable).map((key, emulatorIndex) =>
-          <Segment>
-            <List>
-              <List.Item>
-                <List.Content>
-                  <List.Header>Name: {espDevicesAvailable[key].name}</List.Header>
-                  <List.Description>Host: {espDevicesAvailable[key].host}</List.Description>
-                  <List.Description>Chip ID: {espDevicesAvailable[key].txt.chipid}</List.Description>
-                </List.Content>
-              </List.Item>
-            </List>
-            <Accordion vertical>
-              <div>
-                <Accordion.Title
-                  active={accordionActiveIndex === emulatorIndex}
-                  content='Register remote control emulator'
-                  index={emulatorIndex}
-                  onClick={handleAccordionClick}
-                />
-                <Accordion.Content
-                  active={accordionActiveIndex === emulatorIndex}
-                  content={SizeForm(espDevicesAvailable[key].name, espDevicesAvailable[key].txt.chipid)}
-                />
-              </div>
-            </Accordion>
-          </Segment>
-        )}
+      <Grid columns={2} relaxed="very">
+        <Grid.Column>
+          <h2>List of registered devices</h2>
+          {Object.keys(espDevicesAvailable)
+                 .filter(key => stringBoolToBool(espDevicesAvailable[key].txt.registered))
+                 .map((key, emulatorIndex) => generateDevice(espDevicesAvailable[key], emulatorIndex))}
+        </Grid.Column>
+        <Grid.Column>
+          <h2>List of unregistered devices</h2>
+          {Object.keys(espDevicesAvailable)
+                 .filter(key => !stringBoolToBool(espDevicesAvailable[key].txt.registered))
+                 .map((key, emulatorIndex) => generateDevice(espDevicesAvailable[key], emulatorIndex))}
+        </Grid.Column>
+      </Grid>
+
     </Segment>
   );
 }
