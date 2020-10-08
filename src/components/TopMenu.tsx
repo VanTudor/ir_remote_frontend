@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Menu, Input, Segment, Icon } from "semantic-ui-react";
+import Devices from "./Devices";
 import RemoteControlEmulatorsScanner from "./RemoteControlEmulatorsScanner";
+import { IBonjourServiceWithLastSeen, IDictionary } from "./Types";
 
 export default function TopMenu() {
   const defaultActiveTabName = "remoteEmulators";
@@ -17,9 +19,9 @@ export default function TopMenu() {
       case "remoteEmulators":
         return <RemoteControlEmulatorsScanner />;
       case "devices":
-        return "Not yet.";
-      case "deviceCommands":
-        return "Not yet.";
+        return <Devices />;
+      // case Devices:
+      //   return "Not yet.";
       default:
         return "What.";
     }

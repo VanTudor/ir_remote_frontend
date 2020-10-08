@@ -1,30 +1,43 @@
 import React, { useEffect, useState } from "react";
-import { Accordion, Button, Form, List, Menu, Segment, Grid } from "semantic-ui-react";
+import { Accordion, Button, Form, List, Segment, Grid } from "semantic-ui-react";
 import socketIOClient from "socket.io-client";
+import { SocketIOEndpoint } from "../config";
 import { createRemoteControl } from "../requests/requests";
 import { stringBoolToBool } from "../utils";
 import { IBonjourServiceWithLastSeen, IDictionary } from "./Types";
-
-const SocketIOEndpoint = "http://127.0.0.1:3001";
 
 interface IRegisterDeviceFormState {
   name: string;
   description: string;
 }
 
+const handleRegisterRemoteEmulatorClick = (name: string, description: string, host: string) => async (e: { preventDefault: () => void; }, _data: any) => {
+  e.preventDefault();
+  await createRemoteControl(name, description, host);
+}
+
 function RemoteControlEmulatorsScanner() {
-  const [espDevicesAvailable, setEspDevicesAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
   const [accordionActiveIndex, setAccordionActiveIndex] = useState(null);
   const [registerDeviceFormState, setRegisterDeviceFormState]: [IDictionary<IRegisterDeviceFormState>, any] = useState({});
+
+  const [registeredRCEAvailable, setRegisteredRCEAvailable]: [IBonjourServiceWithLastSeen[], any] = useState([]);
+  const [unregisteredRCEAvailable, setUnregisteredRCEAvailable]: [IBonjourServiceWithLastSeen[], any] = useState([]);
   useEffect(() => {
-  const socket = socketIOClient(SocketIOEndpoint);
-  // @ts-ignore
-  socket.on("BonjourDevicesAvailable", data => {
-    setEspDevicesAvailable(data);
-  });
+    const socket = socketIOClient(SocketIOEndpoint);
+    // @ts-ignore
+    socket.on("BonjourDevicesAvailable", visibleRCEDeviceDictionary => {
+      Object.keys(visibleRCEDeviceDictionary).forEach(k => {
+        if (stringBoolToBool(visibleRCEDeviceDictionary[k].txt.registered)) {
+          registeredRCEAvailable.push(visibleRCEDeviceDictionary[k]);
+          setRegisteredRCEAvailable(registeredRCEAvailable);
+        } else {
+          unregisteredRCEAvailable.push(visibleRCEDeviceDictionary[k]);
+          setUnregisteredRCEAvailable(unregisteredRCEAvailable);
+        }
+      })
+    });
     return () => { socket.disconnect() };
   }, []);
-
 
   const handleAccordionClick = (e: { preventDefault: () => void; }, titleProps: { index?: any; }) => {
     e.preventDefault();
@@ -33,48 +46,7 @@ function RemoteControlEmulatorsScanner() {
     setAccordionActiveIndex(newIndex);
   };
 
-  const handleRegisterRemoteEmulatorClick = (deviceId: string) => async (e: { preventDefault: () => void; }, data: any) => {
-    e.preventDefault();
-    console.log(espDevicesAvailable[deviceId]);
-    console.log(registerDeviceFormState[deviceId]);
-    await createRemoteControl(registerDeviceFormState[deviceId].name, registerDeviceFormState[deviceId].description, espDevicesAvailable[deviceId].host);
-  }
-
-  function generateDevice(espDevice: IBonjourServiceWithLastSeen, itemIndex: number) {
-    return (
-      <Segment>
-        <List>
-          <List.Item>
-            <List.Content>
-              <List.Header>Name: {espDevice.name}</List.Header>
-              <List.Description>Host: {espDevice.host}</List.Description>
-              <List.Description>Ip addresses: <ul>{espDevice.addresses.map(addr => (<li>{addr}</li>))}</ul></List.Description>
-              <List.Description>Chip ID: {espDevice.txt.chipid}</List.Description>
-              <List.Description>Registered: {espDevice.txt.registered}</List.Description>
-            </List.Content>
-          </List.Item>
-        </List>
-        <Accordion vertical>
-          <div>
-            <Accordion.Title
-              active={accordionActiveIndex === itemIndex}
-              content={(stringBoolToBool(espDevice.txt.registered) ? 'Edit' : 'Register') + ' remote control emulator'}
-              index={itemIndex}
-              onClick={handleAccordionClick}
-            />
-            <Accordion.Content
-              active={accordionActiveIndex === itemIndex}
-              content={SizeForm(espDevice.name, espDevice.txt.chipid)}
-            />
-          </div>
-        </Accordion>
-        {stringBoolToBool(espDevice.txt.registered) && <Button color="red">Delete</Button>}
-      </Segment>
-    );
-  }
-
-  const SizeForm = (deviceName: string, deviceId: string) => {
-
+  const RegisterRCEForm = (deviceName: string, deviceId: string, host: string) => {
     const formDeviceState = registerDeviceFormState[deviceId] || {};
     return (
       <Form>
@@ -101,25 +73,54 @@ function RemoteControlEmulatorsScanner() {
             }}
           />
         </Form.Group>
-        <Form.Button fluid onClick={handleRegisterRemoteEmulatorClick(deviceId)}>Submit</Form.Button>
+        <Form.Button fluid onClick={handleRegisterRemoteEmulatorClick(deviceName, deviceId, host)}>Submit</Form.Button>
       </Form>
     );
   }
 
+  function generateDevice(rce: IBonjourServiceWithLastSeen, itemIndex: number) {
+    return (
+      <Segment>
+        <List>
+          <List.Item>
+            <List.Content>
+              <List.Header>Name: {rce.name}</List.Header>
+              <List.Description>Host: {rce.host}</List.Description>
+              <List.Description>Ip addresses: <ul>{rce.addresses.map(addr => (<li>{addr}</li>))}</ul></List.Description>
+              <List.Description>Chip ID: {rce.txt.chipid}</List.Description>
+              <List.Description>Registered: {rce.txt.registered}</List.Description>
+            </List.Content>
+          </List.Item>
+        </List>
+        <Accordion>
+          <div>
+            <Accordion.Title
+              active={accordionActiveIndex === itemIndex}
+              content={(stringBoolToBool(rce.txt.registered) ? 'Edit' : 'Register') + ' remote control emulator'}
+              index={itemIndex}
+              onClick={handleAccordionClick}
+            />
+            <Accordion.Content
+              active={accordionActiveIndex === itemIndex}
+              content={RegisterRCEForm(rce.name, rce.txt.chipid, rce.host)}
+            />
+          </div>
+        </Accordion>
+        {stringBoolToBool(rce.txt.registered) && <Button color="red">Delete</Button>}
+      </Segment>
+    );
+  }
+
   return(
-    <Segment loading={!Boolean(Object.keys(espDevicesAvailable).length)}>
+    <Segment loading={registeredRCEAvailable.length + unregisteredRCEAvailable.length === 0}>
       <Grid columns={2} relaxed="very">
         <Grid.Column>
           <h2>List of registered devices</h2>
-          {Object.keys(espDevicesAvailable)
-                 .filter(key => stringBoolToBool(espDevicesAvailable[key].txt.registered))
-                 .map((key, emulatorIndex) => generateDevice(espDevicesAvailable[key], emulatorIndex))}
+          {registeredRCEAvailable.map((rRCE, index) => generateDevice(rRCE, index))}
         </Grid.Column>
         <Grid.Column>
           <h2>List of unregistered devices</h2>
-          {Object.keys(espDevicesAvailable)
-                 .filter(key => !stringBoolToBool(espDevicesAvailable[key].txt.registered))
-                 .map((key, emulatorIndex) => generateDevice(espDevicesAvailable[key], emulatorIndex))}
+          {unregisteredRCEAvailable.map((rRCE, index) => generateDevice(rRCE, index))}
         </Grid.Column>
       </Grid>
 

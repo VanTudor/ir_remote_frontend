@@ -9,3 +9,10 @@ export async function createRemoteControl(name: string, description: string, hos
     hostAddress
   });
 }
+export async function createDevice(name: string, description: string, rceId: string) {
+  return await axios.post(`${serverHost}/device/create`, {
+    name,
+    description,
+    remoteControlEmulatorId: rceId
+  });
+}
