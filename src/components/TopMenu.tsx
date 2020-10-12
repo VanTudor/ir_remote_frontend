@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Menu, Input, Segment, Icon } from "semantic-ui-react";
-import Devices from "./Devices";
+import Devices from "./devices/Devices";
 import RemoteControlEmulatorsScanner from "./RemoteControlEmulatorsScanner";
 import { IBonjourServiceWithLastSeen, IDictionary } from "./Types";
 

@@ -1,4 +1,5 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
+import { IIRCommand, IPaginatedResponse } from "../components/Types";
 import { serverHost }  from "../config";
 
 export async function createRemoteControl(name: string, description: string, hostAddress: string) {
@@ -15,4 +16,14 @@ export async function createDevice(name: string, description: string, rceId: str
     description,
     remoteControlEmulatorId: rceId
   });
+}
+
+export async function deleteDevice(deviceId: string){
+  return await axios.post(`${serverHost}/device/delete`, {
+    id: deviceId
+  })
+}
+
+export async function getCommands(deviceId: string) {
+  return await axios.get<IPaginatedResponse<IIRCommand>>(`${serverHost}/commands?deviceId=${deviceId}&skipFirst=0&maxResultsLength=100`);
 }

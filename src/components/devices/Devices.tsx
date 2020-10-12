@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Accordion, Button, Form, List, Menu, Segment, Grid, Dropdown } from "semantic-ui-react";
-import socketIOClient from "socket.io-client";
-import { serverHost } from "../config";
-import { createDevice, createRemoteControl } from "../requests/requests";
-import { stringBoolToBool } from "../utils";
-import { IBonjourServiceWithLastSeen, IDevice, IDictionary, IPaginatedResponse, IRCE, IRegisteredRCE } from "./Types";
+import { Accordion, Form, Segment, Dropdown, Confirm } from "semantic-ui-react";
+import { serverHost } from "../../config";
+import { createDevice, deleteDevice } from "../../requests/requests";
+import Device from "./Device";
+import {
+  IDevice,
+  IPaginatedResponse,
+  IRCE
+} from "../Types";
 import axios from 'axios';
-
-const SocketIOEndpoint = "http://127.0.0.1:3001";
 
 interface IRegisterDeviceFormState {
   name: string;
@@ -32,56 +33,52 @@ async function getRCEs(): Promise<IRCE[]> {
   return res.data.rows;
 }
 
-
 function Devices() {
+  const [selectedDeleteDevice, setSelectedDeleteDevice]: [IDevice, any] = useState({} as IDevice);
+  const [deleteConfirmPanelOpen, setDeleteConfirmPanelOpen]: [boolean, any] = useState(false);
   const [createAccordionActive, setCreateAccordionActive]: [boolean, any] = useState(false);
   const [devicesAvailable, setDevicesAvailable]: [IDevice[], any] = useState([]);
   const [RCEsAvailable, setRCEsAvailable]: [IRCE[], any] = useState([]);
-  const [accordionActiveIndex, setAccordionActiveIndex] = useState(null);
   const [registerDeviceFormState, setRegisterDeviceFormState]: [IRegisterDeviceFormState, any] = useState({} as IRegisterDeviceFormState);
 
+  async function fetchAndSaveData() {
+    const devices = await getDevices();
+    const rces = await getRCEs();
+    setRCEsAvailable(rces);
+    setDevicesAvailable(devices);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const devices = await getDevices();
-      const rces = await getRCEs();
-      setRCEsAvailable(rces);
-      setDevicesAvailable(devices);
-    }
-    fetchData();
+    fetchAndSaveData();
   }, []);
 
-  const handleCreateDeviceClick = (name: string, description: string, rceId: string) => async (e: { preventDefault: () => void; }, data: any) => {
+  const handleCreateDeviceClick = (name: string, description: string, rceId: string) => async (e: { preventDefault: () => void; }, _data: any) => {
     e.preventDefault();
     console.log('[handleCreateDeviceClick]', name, description, rceId);
     await createDevice(name, description, rceId);
+    await fetchAndSaveData();
   };
 
-  const handleAccordionClick = (e: { preventDefault: () => void; }, data: any) => {
+  const handleAccordionClick = (e: { preventDefault: () => void; }, _data: any) => {
     setCreateAccordionActive(!createAccordionActive);
   }
 
+  const handleDeleteConfirmPanelCancel = () => {
+    setSelectedDeleteDevice({});
+    setDeleteConfirmPanelOpen(false);
+  }
+  const handleDeleteConfirmPanelConfirm = (deviceId: string) => async () => {
+    await deleteDevice(deviceId);
+    await fetchAndSaveData();
+    setDeleteConfirmPanelOpen(false);
+  }
 
-  function generateDevice(device: IDevice, itemIndex: number) {
-    return (
-      <Segment>
-        <List>
-          <List.Item>
-            <List.Content>
-              <List.Header>Name: {device.name}</List.Header>
-              <List.Description>Description: {device.description}</List.Description>
-              {/*<List.Description>Ip addresses: <ul>{device.addresses.map(addr => (<li>{addr}</li>))}</ul></List.Description>*/}
-              {/*<List.Description>Chip ID: {device.txt.chipid}</List.Description>*/}
-              {/*<List.Description>Registered: {device.txt.registered}</List.Description>*/}
-            </List.Content>
-          </List.Item>
-        </List>
-        {/*{stringBoolToBool(espDevice.txt.registered) && <Button color="red">Delete</Button>}*/}
-      </Segment>
-    );
+  const handleOpenDeletePanelClick = (device: IDevice) => () => {
+    setSelectedDeleteDevice(device);
+    setDeleteConfirmPanelOpen(true);
   }
 
   const CreateDeviceForm = () => {
-    const formDeviceState = registerDeviceFormState || {};
     return (
       <Form>
         <Form.Group widths='equal'>
@@ -110,7 +107,6 @@ function Devices() {
           />
         </Form.Group>
         <Form.Group widths='equal'>
-
           <Dropdown
             fluid
             // labeled='Remote control emulator'
@@ -125,9 +121,6 @@ function Devices() {
               text: rce.name
             }))}
             onChange={(e: any, {name, value}) => {
-              console.log('ID!!!', name, value);
-              console.log(e.target.name);
-              console.log(e.target.textContent);
               setRegisterDeviceFormState({
                 ...registerDeviceFormState,
                 remoteControlEmulatorId: value
@@ -147,6 +140,7 @@ function Devices() {
           fluid
           onClick={handleCreateDeviceClick(registerDeviceFormState.name, registerDeviceFormState.description, registerDeviceFormState.remoteControlEmulatorId)}
           disabled={!registerDeviceFormState.name || !registerDeviceFormState.description}
+          color={"green"}
         >Submit</Form.Button>
       </Form>
     );
@@ -155,12 +149,11 @@ function Devices() {
   return(
     <Segment /*loading={!Boolean(devicesAvailable.length)}*/>
           <h2>List of available devices</h2>
-          <Button color="green">Create device</Button>
           <Accordion>
             <div>
               <Accordion.Title
                 active={createAccordionActive}
-                content={'Create remote control emulator'}
+                content={'Create remote control emulator2 '}
                 onClick={handleAccordionClick}
               />
               <Accordion.Content
@@ -169,7 +162,17 @@ function Devices() {
               />
             </div>
           </Accordion>
-          {devicesAvailable.map(generateDevice)}
+          {devicesAvailable.map((device, index) => {
+            // return <div>{device.id}</div>;
+            return <Device device={device} itemIndex={index} handleOpenDeletePanelClick={handleOpenDeletePanelClick}/>
+          })}
+          <Confirm
+            open={deleteConfirmPanelOpen}
+            header={`Delete ${selectedDeleteDevice.name}`}
+            content={"Are you sure? This will also permanently delete its associated IR commands."}
+            onCancel={handleDeleteConfirmPanelCancel}
+            onConfirm={handleDeleteConfirmPanelConfirm(selectedDeleteDevice.id)}
+          />
 
     </Segment>
   );

@@ -47,6 +47,7 @@ export interface IIRCommand {
 }
 
 export interface IDevice {
+  id: string;
   name: string;
   description: string;
   commands: IIRCommand[];

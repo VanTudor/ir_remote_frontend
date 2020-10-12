@@ -7,9 +7,9 @@ import 'semantic-ui-css/semantic.min.css';
 
 ReactDOM.render(
   // @ts-ignore
-  <React.StrictMode>
+  <div>
     <App />
-  </React.StrictMode>,
+  </div>,
   document.getElementById('root')
 );
 
