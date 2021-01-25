@@ -1,15 +1,17 @@
 import axios from "axios";
 import React, { useState } from "react";
-import { Accordion, Button, ButtonGroup, Icon, List, Menu, Segment } from "semantic-ui-react";
+import { Accordion, Button, ButtonGroup, Icon, List, Segment } from "semantic-ui-react";
 import { serverHost } from "../../config";
+import { deleteDevice } from "../../requests/requests";
+import DeleteByIdButtonWithConfirm from "../DeleteByIdButtonWithConfirm";
 import { IDevice, IDictionary, IIRCommand, IPaginatedResponse } from "../Types";
 import IRCommandsList from "./IRCommandsList";
 
 
-function Device({ device, itemIndex, handleOpenDeletePanelClick }: {
+function Device({ device, deleteConfirmCallback, itemIndex }: {
   device: IDevice,
   itemIndex: number,
-  handleOpenDeletePanelClick: (device: IDevice) => () => void
+  deleteConfirmCallback: () => Promise<any>
 }) {
   const [availableCommands, setAvailableCommands]: [IIRCommand[], any] = useState([]);
   const [commandsAccordionOpenMap, setCommandsAccordionOpenMap]: [IDictionary<boolean>, any] = useState({});
@@ -18,13 +20,16 @@ function Device({ device, itemIndex, handleOpenDeletePanelClick }: {
     const res = await axios.get<IPaginatedResponse<IIRCommand>>(`${serverHost}/commands?deviceId=${deviceId}&skipFirst=0&maxResultsLength=100`);
     return res.data.rows;
   }
-  const handleCommandsAccordionClick = (deviceId: string) => async (e: { preventDefault: () => void; }, data: any) => {
+  const handleCommandsAccordionClick = (deviceId: string) => async (_e: { preventDefault: () => void; }, _data: any) => {
     setCommandsAccordionOpenMap({
       ...commandsAccordionOpenMap,
       [deviceId]: !commandsAccordionOpenMap[deviceId]
     });
-    const irCommands: IIRCommand[] = await getCommands(deviceId);
-    setAvailableCommands(irCommands);
+    // don't call if the accordion is being closed
+    if (!commandsAccordionOpenMap[deviceId]) {
+      const irCommands: IIRCommand[] = await getCommands(deviceId);
+      setAvailableCommands(irCommands);
+    }
   }
 
 
@@ -37,10 +42,16 @@ function Device({ device, itemIndex, handleOpenDeletePanelClick }: {
             <ButtonGroup floated={"right"}>
               <Button
                 color={"blue"}>Edit</Button>
-              <Button
-                color={"red"}
-                onClick={handleOpenDeletePanelClick(device)}
-              >Delete</Button>
+              {/*<Button*/}
+              {/*  color={"red"}*/}
+              {/*  onClick={handleOpenDeletePanelClick(device)}*/}
+              {/*>Delete</Button>*/}
+              <DeleteByIdButtonWithConfirm
+                entityName="device"
+                extraConfirmText="Deleting this will also remove all associated IR commands."
+                deleteMethod={() => deleteDevice(device.id)}
+                deleteConfirmCallback={deleteConfirmCallback}
+              />
             </ButtonGroup>
             <List.Description>Description: {device.description}</List.Description>
             <List.Description>Commands:
