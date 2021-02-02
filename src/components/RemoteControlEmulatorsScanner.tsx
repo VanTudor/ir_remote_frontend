@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Accordion, Button, Form, List, Segment, Grid } from "semantic-ui-react";
-import socketIOClient from "socket.io-client";
+import { io } from "socket.io-client";
 import { SocketIOEndpoint } from "../config";
 import { createRemoteControl, deleteRemoteControl } from "../requests/requests";
 import { stringBoolToBool } from "../utils";
@@ -31,7 +31,9 @@ function RemoteControlEmulatorsScanner() {
   [A, setA] = useState("");
   useEffect(() => {
     console.log(registeredRCEAvailable);
-    const socket = socketIOClient(SocketIOEndpoint);
+    const socket = io(SocketIOEndpoint, {
+      withCredentials: true
+    });
     // @ts-ignore
     socket.on("BonjourDevicesAvailable", visibleRCEDeviceDictionary => {
       Object.keys(visibleRCEDeviceDictionary).forEach(k => {
@@ -89,7 +91,7 @@ function RemoteControlEmulatorsScanner() {
             }}
           />
         </Form.Group>
-        <Form.Button fluid onClick={handleRegisterRemoteEmulatorClick(deviceName, deviceId, host)}>Submit</Form.Button>
+        <Form.Button fluid onClick={handleRegisterRemoteEmulatorClick(formDeviceState.name, formDeviceState.description, host)}>Submit</Form.Button>
       </Form>
     );
   }

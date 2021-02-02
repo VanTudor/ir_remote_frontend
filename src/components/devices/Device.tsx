@@ -65,7 +65,7 @@ function Device({ device, deleteConfirmCallback, itemIndex }: {
                   />
                   <Accordion.Content
                     active={commandsAccordionOpenMap[device.id]}
-                    content={IRCommandsList(availableCommands)}
+                    content={IRCommandsList(device.id, availableCommands)}
                   />
                 </div>
               </Accordion>

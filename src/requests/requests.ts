@@ -34,3 +34,9 @@ export async function deleteDevice(deviceId: string){
 export async function getCommands(deviceId: string) {
   return await axios.get<IPaginatedResponse<IIRCommand>>(`${serverHost}/commands?deviceId=${deviceId}&skipFirst=0&maxResultsLength=100`);
 }
+
+export async function emiteIRCodeByDeviceIdAndCommandName(deviceId: string, commandName: string) {
+  return await axios.post(`${serverHost}/remoteControlEmulator/emitIrCodeByCommandAndRemoteControl`, {
+    deviceId, commandName
+  });
+}

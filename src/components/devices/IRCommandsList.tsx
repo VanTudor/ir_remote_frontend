@@ -1,8 +1,17 @@
 import { Button, ButtonGroup, List } from "semantic-ui-react";
+import { emiteIRCodeByDeviceIdAndCommandName } from "../../requests/requests";
 import { IIRCommand } from "../Types";
 import React from "react";
 
-export default function IRCommandsList(irCodesList: IIRCommand[]) {
+export default function IRCommandsList(deviceId: string, irCodesList: IIRCommand[]) {
+
+  const handleEmitCode = (commandName: string) => async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    console.log(`Emitting IR Code. Command name: ${commandName}`);
+    const res = await emiteIRCodeByDeviceIdAndCommandName(deviceId, commandName);
+    console.log(res);
+    // remoteControlEmulator/emitIrCodeByCommandAndRemoteControl
+  }
   return(
     <List divided verticalAlign='middle'>
       {irCodesList.map((irCode, index) =>
@@ -10,7 +19,7 @@ export default function IRCommandsList(irCodesList: IIRCommand[]) {
           <List.Content floated={"right"}>
             <Button
               color={"green"}
-              onClick={() => {}}
+              onClick={handleEmitCode(irCode.name)}
             >Emit</Button>
             <Button
               color={"red"}
