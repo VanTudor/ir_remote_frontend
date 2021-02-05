@@ -1,7 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import socketIOClient from "socket.io-client";
 // import RemoteControlEmulatorsScanner from "./components/RemoteControlEmulatorsScanner";
 import TopMenu from "./components/TopMenu";
 import { IBonjourServiceWithLastSeen, IDictionary } from "./components/Types";

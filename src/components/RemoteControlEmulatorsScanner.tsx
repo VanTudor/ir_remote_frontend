@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import { SocketIOEndpoint } from "../config";
 import { createRemoteControl, deleteRemoteControl } from "../requests/requests";
 import { stringBoolToBool } from "../utils";
-import { IBonjourServiceWithLastSeen, IDictionary } from "./Types";
+import { IBonjourServiceWithLastSeen, IDictionary, IIRCodeDetectedEvent } from "./Types";
 
 interface IRegisterDeviceFormState {
   name: string;
@@ -32,7 +32,12 @@ function RemoteControlEmulatorsScanner() {
   useEffect(() => {
     console.log(registeredRCEAvailable);
     const socket = io(SocketIOEndpoint, {
-      withCredentials: true
+      transports: ["polling", "websocket"],
+      withCredentials: true,
+      extraHeaders: {
+        "Access-Control-Allow-Origin": "*"
+      },
+      auth: { clientType: "FE" }
     });
     // @ts-ignore
     socket.on("BonjourDevicesAvailable", visibleRCEDeviceDictionary => {
@@ -55,6 +60,9 @@ function RemoteControlEmulatorsScanner() {
         // console.log(registeredRCEAvailable, unregisteredRCEAvailable);
       });
     });
+    socket.on("IRCodeDetected", (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
+      console.log(IRCodeDetectedEvent);
+    })
     return () => { socket.disconnect() };
   }, []);
   const handleAccordionClick = (e: { preventDefault: () => void; }, titleProps: { index?: any; }) => {

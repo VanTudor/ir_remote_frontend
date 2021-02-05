@@ -54,3 +54,8 @@ export interface IDevice {
   commands: IIRCommand[];
   state: Dictionary<any>; // TODO: make this better
 }
+
+export interface IIRCodeDetectedEvent {
+  RCEId: string;
+  IRCode: string;
+}
