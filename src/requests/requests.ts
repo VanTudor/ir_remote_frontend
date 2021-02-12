@@ -40,3 +40,9 @@ export async function emiteIRCodeByDeviceIdAndCommandName(deviceId: string, comm
     deviceId, commandName
   });
 }
+
+export async function createCommand(deviceId: string, commandName: string, irCodeHex: string, commandDescription?: string) {
+  return await axios.post(`${serverHost}/command/create`, {
+    deviceId, name: commandName, irCodeHex, description: commandDescription
+  });
+}

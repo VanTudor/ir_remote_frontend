@@ -127,7 +127,7 @@ function Devices() {
             <div>
               <Accordion.Title
                 active={createAccordionActive}
-                content={'Create remote control emulator2 '}
+                content={'Create device'}
                 onClick={handleAccordionClick}
               />
               <Accordion.Content
@@ -137,7 +137,7 @@ function Devices() {
             </div>
           </Accordion>
           {devicesAvailable.map((device, index) => {
-            return <Device device={device} deleteConfirmCallback={fetchAndSaveData} itemIndex={index} />
+            return <Device device={device} deleteConfirmCallback={fetchAndSaveData} itemIndex={index} key={index} />
           })}
 
     </Segment>

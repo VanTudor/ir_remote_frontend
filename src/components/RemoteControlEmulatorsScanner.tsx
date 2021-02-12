@@ -27,8 +27,7 @@ function RemoteControlEmulatorsScanner() {
 
   const [registeredRCEAvailable, setRegisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
   const [unregisteredRCEAvailable, setUnregisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
-  let A: string, setA: any;
-  [A, setA] = useState("");
+
   useEffect(() => {
     console.log(registeredRCEAvailable);
     const socket = io(SocketIOEndpoint, {
@@ -43,8 +42,8 @@ function RemoteControlEmulatorsScanner() {
     socket.on("BonjourDevicesAvailable", visibleRCEDeviceDictionary => {
       Object.keys(visibleRCEDeviceDictionary).forEach(k => {
         if (stringBoolToBool(visibleRCEDeviceDictionary[k].txt.registered)) {
-          A = visibleRCEDeviceDictionary[k].name;
-          setA(A);
+          // A = visibleRCEDeviceDictionary[k].name;
+          // setA(A);
           setRegisteredRCEAvailable({
             ...registeredRCEAvailable,
             [k]: visibleRCEDeviceDictionary[k]

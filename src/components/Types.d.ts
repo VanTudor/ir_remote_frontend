@@ -53,6 +53,7 @@ export interface IDevice {
   description: string;
   commands: IIRCommand[];
   state: Dictionary<any>; // TODO: make this better
+  remoteControlEmulator: IRCE;
 }
 
 export interface IIRCodeDetectedEvent {

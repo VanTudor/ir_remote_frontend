@@ -1,10 +1,13 @@
 import axios from "axios";
-import React, { useState } from "react";
-import { Accordion, Button, ButtonGroup, Icon, List, Segment } from "semantic-ui-react";
-import { serverHost } from "../../config";
+import React, { useEffect, useState } from "react";
+import { Accordion, Button, ButtonGroup, Form, Icon, List, Segment } from "semantic-ui-react";
+import { io } from "socket.io-client";
+import { serverHost, SocketIOEndpoint } from "../../config";
 import { deleteDevice } from "../../requests/requests";
+import { stringBoolToBool } from "../../utils";
 import DeleteByIdButtonWithConfirm from "../DeleteByIdButtonWithConfirm";
-import { IDevice, IDictionary, IIRCommand, IPaginatedResponse } from "../Types";
+import { IDevice, IDictionary, IIRCodeDetectedEvent, IIRCommand, IPaginatedResponse } from "../Types";
+import CreateIrCommandForm from "./createIrCommandForm";
 import IRCommandsList from "./IRCommandsList";
 
 
@@ -13,13 +16,21 @@ function Device({ device, deleteConfirmCallback, itemIndex }: {
   itemIndex: number,
   deleteConfirmCallback: () => Promise<any>
 }) {
+  console.log('AAA', device);
   const [availableCommands, setAvailableCommands]: [IIRCommand[], any] = useState([]);
   const [commandsAccordionOpenMap, setCommandsAccordionOpenMap]: [IDictionary<boolean>, any] = useState({});
+  const [irCodesAccordionMap, setIrCodesAccordionMap]: [IDictionary<boolean>, any] = useState({});
 
   async function getCommands(deviceId: string): Promise<IIRCommand[]> {
     const res = await axios.get<IPaginatedResponse<IIRCommand>>(`${serverHost}/commands?deviceId=${deviceId}&skipFirst=0&maxResultsLength=100`);
     return res.data.rows;
   }
+  const handleIrAccordionClick = (devideId: string) => (_e: { preventDefault: () => void; }, _data: any) => {
+    setIrCodesAccordionMap({
+      ...irCodesAccordionMap,
+      [devideId]: !irCodesAccordionMap[devideId]
+    })
+  };
   const handleCommandsAccordionClick = (deviceId: string) => async (_e: { preventDefault: () => void; }, _data: any) => {
     setCommandsAccordionOpenMap({
       ...commandsAccordionOpenMap,
@@ -31,6 +42,27 @@ function Device({ device, deleteConfirmCallback, itemIndex }: {
       setAvailableCommands(irCommands);
     }
   }
+
+  let RCEIdDetectedCodeMap: { [k: string]: string }, setRCEIdDetectedCodeMap: any;
+  [RCEIdDetectedCodeMap, setRCEIdDetectedCodeMap] = useState({});
+  useEffect(() => {
+    const socket = io(SocketIOEndpoint, {
+      transports: ["polling", "websocket"],
+      withCredentials: true,
+      extraHeaders: {
+        "Access-Control-Allow-Origin": "*"
+      },
+      auth: { clientType: "FE" }
+    });
+    socket.on("IRCodeDetected", (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
+      console.log(IRCodeDetectedEvent);
+      setRCEIdDetectedCodeMap({
+        ...RCEIdDetectedCodeMap,
+        [IRCodeDetectedEvent.RCEId]: parseInt(IRCodeDetectedEvent.IRCode, 10).toString(16)
+      })
+    })
+    return () => { socket.disconnect() };
+  }, []);
 
 
   return (
@@ -70,6 +102,35 @@ function Device({ device, deleteConfirmCallback, itemIndex }: {
                 </div>
               </Accordion>
 
+            </List.Description>
+            <List.Description>
+              RCE:
+              {device.remoteControlEmulator ?
+               (<span>
+                  <List.Item>Name: {device.remoteControlEmulator.name}</List.Item>
+                  <List.Item>Description: {device.remoteControlEmulator.description}</List.Item>
+                  <List.Item>
+                    <Accordion>
+                      <div>
+                        <Accordion.Title
+                          active={irCodesAccordionMap[device.id]}
+                          content={"Last detected IR Code: " + (RCEIdDetectedCodeMap[device.remoteControlEmulator.id] || "null")}
+                          onClick={handleIrAccordionClick(device.id)}
+                        />
+                        <Accordion.Content
+                          active={irCodesAccordionMap[device.id]}
+                          content={
+                            <CreateIrCommandForm
+                              irCodeHex={RCEIdDetectedCodeMap[device.remoteControlEmulator.id]}
+                              deviceId={device.id}
+                            />
+                          }
+                        />
+                      </div>
+                    </Accordion>
+                  </List.Item>
+                 </span>)
+              : "No RCE assigned"}
             </List.Description>
           </List.Content>
         </List.Item>
