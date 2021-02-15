@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import { SocketIOEndpoint } from "../config";
 import { createRemoteControl, deleteRemoteControl } from "../requests/requests";
 import { stringBoolToBool } from "../utils";
-import { IBonjourServiceWithLastSeen, IDictionary, IIRCodeDetectedEvent } from "./Types";
+import { IBonjourService, IBonjourServiceWithLastSeen, IDictionary, IIRCodeDetectedEvent } from "./Types";
 
 interface IRegisterDeviceFormState {
   name: string;
@@ -21,6 +21,48 @@ const handleDeregisterRemoteEmulatorClick = (rceId: string) => async (e: { preve
   await deleteRemoteControl(rceId);
 }
 
+const socket = io(SocketIOEndpoint, {
+  transports: ["polling", "websocket"],
+  withCredentials: true,
+  extraHeaders: {
+    "Access-Control-Allow-Origin": "*"
+  },
+  auth: { clientType: "FE" }
+});
+
+const bonjourDevicesAvailableHandler = (visibleRCEDeviceDictionary: IDictionary<IBonjourServiceWithLastSeen>, registeredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>, setRegisteredRCEAvailable: any, unregisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>, setUnregisteredRCEAvailable: any) => {
+  let newRegisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen> = {};
+  let newUnregisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen> = {};
+  Object.keys(visibleRCEDeviceDictionary).forEach(k => {
+    if (stringBoolToBool(visibleRCEDeviceDictionary[k].txt.registered)) {
+      newRegisteredRCEAvailable[k] = visibleRCEDeviceDictionary[k];
+      console.log(registeredRCEAvailable);
+      // setRegisteredRCEAvailable({
+      //   ...registeredRCEAvailable,
+      //   [k]: visibleRCEDeviceDictionary[k]
+      // });
+      // console.log(registeredRCEAvailable);
+      delete unregisteredRCEAvailable[k];
+    } else {
+      newUnregisteredRCEAvailable[k] = visibleRCEDeviceDictionary[k]
+      // setUnregisteredRCEAvailable({
+      //   ...unregisteredRCEAvailable,
+      //   [k]: visibleRCEDeviceDictionary[k]
+      // });
+      delete registeredRCEAvailable[k];
+    }
+    // console.log(registeredRCEAvailable, unregisteredRCEAvailable);
+  });
+  setRegisteredRCEAvailable({
+    ...registeredRCEAvailable,
+    ...newRegisteredRCEAvailable
+  });
+  setUnregisteredRCEAvailable({
+    ...unregisteredRCEAvailable,
+    ...newUnregisteredRCEAvailable
+  });
+}
+
 function RemoteControlEmulatorsScanner() {
   const [accordionActiveIndex, setAccordionActiveIndex] = useState(null);
   const [registerDeviceFormState, setRegisterDeviceFormState]: [IDictionary<IRegisterDeviceFormState>, any] = useState({});
@@ -28,42 +70,25 @@ function RemoteControlEmulatorsScanner() {
   const [registeredRCEAvailable, setRegisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
   const [unregisteredRCEAvailable, setUnregisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
 
+  const registeredRCEAvailableRef = React.useRef(registeredRCEAvailable);
+  const unregisteredRCEAvailableRef = React.useRef(unregisteredRCEAvailable);
+  useEffect(() => {
+      console.log(registeredRCEAvailable);
+    registeredRCEAvailableRef.current = registeredRCEAvailable;
+    unregisteredRCEAvailableRef.current = registeredRCEAvailable;
+  });
+
   useEffect(() => {
     console.log(registeredRCEAvailable);
-    const socket = io(SocketIOEndpoint, {
-      transports: ["polling", "websocket"],
-      withCredentials: true,
-      extraHeaders: {
-        "Access-Control-Allow-Origin": "*"
-      },
-      auth: { clientType: "FE" }
-    });
+
+    const bonjourDevicesAvailableWrappedHandler = (message: IDictionary<IBonjourServiceWithLastSeen>) => {
+      bonjourDevicesAvailableHandler(message, registeredRCEAvailableRef.current, setRegisteredRCEAvailable, unregisteredRCEAvailableRef.current, setUnregisteredRCEAvailable);
+  };
     // @ts-ignore
-    socket.on("BonjourDevicesAvailable", visibleRCEDeviceDictionary => {
-      Object.keys(visibleRCEDeviceDictionary).forEach(k => {
-        if (stringBoolToBool(visibleRCEDeviceDictionary[k].txt.registered)) {
-          // A = visibleRCEDeviceDictionary[k].name;
-          // setA(A);
-          setRegisteredRCEAvailable({
-            ...registeredRCEAvailable,
-            [k]: visibleRCEDeviceDictionary[k]
-          });
-          delete unregisteredRCEAvailable[k];
-        } else {
-          setUnregisteredRCEAvailable({
-            ...unregisteredRCEAvailable,
-            [k]: visibleRCEDeviceDictionary[k]
-          });
-          delete registeredRCEAvailable[k];
-        }
-        // console.log(registeredRCEAvailable, unregisteredRCEAvailable);
-      });
-    });
-    socket.on("IRCodeDetected", (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
-      console.log(IRCodeDetectedEvent);
-    })
-    return () => { socket.disconnect() };
+    socket.on("BonjourDevicesAvailable", bonjourDevicesAvailableWrappedHandler);
+    return () => { socket.off('BonjourDevicesAvailable', bonjourDevicesAvailableWrappedHandler); };
   }, []);
+
   const handleAccordionClick = (e: { preventDefault: () => void; }, titleProps: { index?: any; }) => {
     e.preventDefault();
     const { index } = titleProps;
@@ -142,7 +167,10 @@ function RemoteControlEmulatorsScanner() {
         <Grid columns={2} relaxed="very">
           <Grid.Column>
             <h2>List of registered devices</h2>
-            {Object.keys(registeredRCEAvailable).map((k, index) => generateDevice(registeredRCEAvailable[k], index))}
+            {Object.keys(registeredRCEAvailable).map((k, index) => {
+              // console.log(registeredRCEAvailableRef);
+              return generateDevice(registeredRCEAvailable[k], index);
+            })}
           </Grid.Column>
           <Grid.Column>
             <h2>List of unregistered devices</h2>
