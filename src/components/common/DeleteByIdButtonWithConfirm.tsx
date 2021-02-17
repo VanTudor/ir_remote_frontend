@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button, ButtonGroup, Confirm, Segment } from "semantic-ui-react";
-import { IDevice } from "./Types";
+import { IDevice } from "../Types";
 
 export default function DeleteByIdButtonWithConfirm({ extraConfirmText, entityName, deleteMethod, deleteConfirmCallback }: {
   extraConfirmText: string,

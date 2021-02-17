@@ -41,6 +41,13 @@ export async function emiteIRCodeByDeviceIdAndCommandName(deviceId: string, comm
   });
 }
 
+export async function deleteCommand(id: string) {
+  return await axios.post(`${serverHost}/command/delete`, {
+    id
+  });
+}
+
+
 export async function createCommand(deviceId: string, commandName: string, irCodeHex: string, commandDescription?: string) {
   return await axios.post(`${serverHost}/command/create`, {
     deviceId, name: commandName, irCodeHex, description: commandDescription

@@ -1,30 +1,28 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { Accordion, Button, ButtonGroup, Form, Icon, List, Segment } from "semantic-ui-react";
-import { io } from "socket.io-client";
-import { serverHost, SocketIOEndpoint } from "../../config";
-import { deleteDevice } from "../../requests/requests";
-import { stringBoolToBool } from "../../utils";
-import DeleteByIdButtonWithConfirm from "../DeleteByIdButtonWithConfirm";
+import React, { Dispatch, SetStateAction, useState } from "react";
+import { Accordion, Button, ButtonGroup, Icon, List, Segment } from "semantic-ui-react";
+
+import { deleteDevice, getCommands } from "../../requests/requests";
+import DeleteByIdButtonWithConfirm from "../common/DeleteByIdButtonWithConfirm";
 import { IDevice, IDictionary, IIRCodeDetectedEvent, IIRCommand, IPaginatedResponse } from "../Types";
 import CreateIrCommandForm from "./createIrCommandForm";
 import IRCommandsList from "./IRCommandsList";
 
+const fetchAndUpdateCommandsList = async (deviceId: string, setAvailableCommands: Dispatch<SetStateAction<{}>>): Promise<void> => {
+  const irCommands: IIRCommand[] = (await getCommands(deviceId)).data.rows;
+  setAvailableCommands(irCommands);
+}
 
-function Device({ device, deleteConfirmCallback, itemIndex }: {
+function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback }: {
   device: IDevice,
   itemIndex: number,
+  RCEIdDetectedCodeMap: { [k: string]: string }
   deleteConfirmCallback: () => Promise<any>
 }) {
-  console.log('AAA', device);
-  const [availableCommands, setAvailableCommands]: [IIRCommand[], any] = useState([]);
-  const [commandsAccordionOpenMap, setCommandsAccordionOpenMap]: [IDictionary<boolean>, any] = useState({});
-  const [irCodesAccordionMap, setIrCodesAccordionMap]: [IDictionary<boolean>, any] = useState({});
 
-  async function getCommands(deviceId: string): Promise<IIRCommand[]> {
-    const res = await axios.get<IPaginatedResponse<IIRCommand>>(`${serverHost}/commands?deviceId=${deviceId}&skipFirst=0&maxResultsLength=100`);
-    return res.data.rows;
-  }
+  const [availableCommands, setAvailableCommands]: [IIRCommand[], any] = useState([]);
+  const [commandsAccordionOpenMap, setCommandsAccordionOpenMap]: [IDictionary<boolean>, Dispatch<SetStateAction<{}>>] = useState({});
+  const [irCodesAccordionMap, setIrCodesAccordionMap]: [IDictionary<boolean>, Dispatch<SetStateAction<{}>>] = useState({});
+
   const handleIrAccordionClick = (devideId: string) => (_e: { preventDefault: () => void; }, _data: any) => {
     setIrCodesAccordionMap({
       ...irCodesAccordionMap,
@@ -38,31 +36,10 @@ function Device({ device, deleteConfirmCallback, itemIndex }: {
     });
     // don't call if the accordion is being closed
     if (!commandsAccordionOpenMap[deviceId]) {
-      const irCommands: IIRCommand[] = await getCommands(deviceId);
-      setAvailableCommands(irCommands);
+      await fetchAndUpdateCommandsList(deviceId, setAvailableCommands);
     }
   }
 
-  let RCEIdDetectedCodeMap: { [k: string]: string }, setRCEIdDetectedCodeMap: any;
-  [RCEIdDetectedCodeMap, setRCEIdDetectedCodeMap] = useState({});
-  useEffect(() => {
-    const socket = io(SocketIOEndpoint, {
-      transports: ["polling", "websocket"],
-      withCredentials: true,
-      extraHeaders: {
-        "Access-Control-Allow-Origin": "*"
-      },
-      auth: { clientType: "FE" }
-    });
-    socket.on("IRCodeDetected", (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
-      console.log(IRCodeDetectedEvent);
-      setRCEIdDetectedCodeMap({
-        ...RCEIdDetectedCodeMap,
-        [IRCodeDetectedEvent.RCEId]: parseInt(IRCodeDetectedEvent.IRCode, 10).toString(16)
-      })
-    })
-    return () => { socket.disconnect() };
-  }, []);
 
 
   return (
@@ -97,7 +74,7 @@ function Device({ device, deleteConfirmCallback, itemIndex }: {
                   />
                   <Accordion.Content
                     active={commandsAccordionOpenMap[device.id]}
-                    content={IRCommandsList(device.id, availableCommands)}
+                    content={IRCommandsList(device.id, availableCommands, () => fetchAndUpdateCommandsList(device.id, setAvailableCommands))}
                   />
                 </div>
               </Accordion>
@@ -123,6 +100,7 @@ function Device({ device, deleteConfirmCallback, itemIndex }: {
                             <CreateIrCommandForm
                               irCodeHex={RCEIdDetectedCodeMap[device.remoteControlEmulator.id]}
                               deviceId={device.id}
+                              fetchCommands={() => fetchAndUpdateCommandsList(device.id, setAvailableCommands)}
                             />
                           }
                         />

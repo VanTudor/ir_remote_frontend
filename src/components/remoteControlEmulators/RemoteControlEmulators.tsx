@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Accordion, Button, Form, List, Segment, Grid } from "semantic-ui-react";
-import { io } from "socket.io-client";
-import { SocketIOEndpoint } from "../config";
-import { createRemoteControl, deleteRemoteControl } from "../requests/requests";
-import { stringBoolToBool } from "../utils";
-import { IBonjourService, IBonjourServiceWithLastSeen, IDictionary, IIRCodeDetectedEvent } from "./Types";
+
+import { createRemoteControl, deleteRemoteControl } from "../../requests/requests";
+import { stringBoolToBool } from "../../utils";
+import { IBonjourServiceWithLastSeen, IDictionary } from "../Types";
 
 interface IRegisterDeviceFormState {
   name: string;
@@ -21,73 +20,12 @@ const handleDeregisterRemoteEmulatorClick = (rceId: string) => async (e: { preve
   await deleteRemoteControl(rceId);
 }
 
-const socket = io(SocketIOEndpoint, {
-  transports: ["polling", "websocket"],
-  withCredentials: true,
-  extraHeaders: {
-    "Access-Control-Allow-Origin": "*"
-  },
-  auth: { clientType: "FE" }
-});
-
-const bonjourDevicesAvailableHandler = (visibleRCEDeviceDictionary: IDictionary<IBonjourServiceWithLastSeen>, registeredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>, setRegisteredRCEAvailable: any, unregisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>, setUnregisteredRCEAvailable: any) => {
-  let newRegisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen> = {};
-  let newUnregisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen> = {};
-  Object.keys(visibleRCEDeviceDictionary).forEach(k => {
-    if (stringBoolToBool(visibleRCEDeviceDictionary[k].txt.registered)) {
-      newRegisteredRCEAvailable[k] = visibleRCEDeviceDictionary[k];
-      console.log(registeredRCEAvailable);
-      // setRegisteredRCEAvailable({
-      //   ...registeredRCEAvailable,
-      //   [k]: visibleRCEDeviceDictionary[k]
-      // });
-      // console.log(registeredRCEAvailable);
-      delete unregisteredRCEAvailable[k];
-    } else {
-      newUnregisteredRCEAvailable[k] = visibleRCEDeviceDictionary[k]
-      // setUnregisteredRCEAvailable({
-      //   ...unregisteredRCEAvailable,
-      //   [k]: visibleRCEDeviceDictionary[k]
-      // });
-      delete registeredRCEAvailable[k];
-    }
-    // console.log(registeredRCEAvailable, unregisteredRCEAvailable);
-  });
-  setRegisteredRCEAvailable({
-    ...registeredRCEAvailable,
-    ...newRegisteredRCEAvailable
-  });
-  setUnregisteredRCEAvailable({
-    ...unregisteredRCEAvailable,
-    ...newUnregisteredRCEAvailable
-  });
-}
-
-function RemoteControlEmulatorsScanner() {
+function RemoteControlEmulators({ registeredRCEAvailable, unregisteredRCEAvailable }: {
+  registeredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>,
+  unregisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>
+}) {
   const [accordionActiveIndex, setAccordionActiveIndex] = useState(null);
   const [registerDeviceFormState, setRegisterDeviceFormState]: [IDictionary<IRegisterDeviceFormState>, any] = useState({});
-
-  const [registeredRCEAvailable, setRegisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
-  const [unregisteredRCEAvailable, setUnregisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
-
-  const registeredRCEAvailableRef = React.useRef(registeredRCEAvailable);
-  const unregisteredRCEAvailableRef = React.useRef(unregisteredRCEAvailable);
-  useEffect(() => {
-      console.log(registeredRCEAvailable);
-    registeredRCEAvailableRef.current = registeredRCEAvailable;
-    unregisteredRCEAvailableRef.current = registeredRCEAvailable;
-  });
-
-  useEffect(() => {
-    console.log(registeredRCEAvailable);
-
-    const bonjourDevicesAvailableWrappedHandler = (message: IDictionary<IBonjourServiceWithLastSeen>) => {
-      bonjourDevicesAvailableHandler(message, registeredRCEAvailableRef.current, setRegisteredRCEAvailable, unregisteredRCEAvailableRef.current, setUnregisteredRCEAvailable);
-  };
-    // @ts-ignore
-    socket.on("BonjourDevicesAvailable", bonjourDevicesAvailableWrappedHandler);
-    return () => { socket.off('BonjourDevicesAvailable', bonjourDevicesAvailableWrappedHandler); };
-  }, []);
 
   const handleAccordionClick = (e: { preventDefault: () => void; }, titleProps: { index?: any; }) => {
     e.preventDefault();
@@ -183,4 +121,4 @@ function RemoteControlEmulatorsScanner() {
   );
 }
 
-export default RemoteControlEmulatorsScanner;
+export default RemoteControlEmulators;

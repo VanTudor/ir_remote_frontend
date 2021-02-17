@@ -1,17 +1,10 @@
-import { Button, ButtonGroup, List } from "semantic-ui-react";
-import { emiteIRCodeByDeviceIdAndCommandName } from "../../requests/requests";
+import { Button, List } from "semantic-ui-react";
+import { emiteIRCodeByDeviceIdAndCommandName, deleteCommand } from "../../requests/requests";
 import { IIRCommand } from "../Types";
 import React from "react";
+import { requestifyButton } from "../utils";
 
-export default function IRCommandsList(deviceId: string, irCodesList: IIRCommand[]) {
-
-  const handleEmitCode = (commandName: string) => async (e: { preventDefault: () => void }) => {
-    e.preventDefault();
-    console.log(`Emitting IR Code. Command name: ${commandName}`);
-    const res = await emiteIRCodeByDeviceIdAndCommandName(deviceId, commandName);
-    console.log(res);
-    // remoteControlEmulator/emitIrCodeByCommandAndRemoteControl
-  }
+export default function IRCommandsList(deviceId: string, irCodesList: IIRCommand[], fetchCommands: () => Promise<void>) {
   return(
     <List divided verticalAlign='middle'>
       {irCodesList.map((irCode, index) =>
@@ -19,11 +12,11 @@ export default function IRCommandsList(deviceId: string, irCodesList: IIRCommand
           <List.Content floated={"right"}>
             <Button
               color={"green"}
-              onClick={handleEmitCode(irCode.name)}
+              onClick={requestifyButton([deviceId, irCode.name], emiteIRCodeByDeviceIdAndCommandName)}
             >Emit</Button>
             <Button
               color={"red"}
-              onClick={() => {}}
+              onClick={requestifyButton([irCode.id], deleteCommand, fetchCommands)}
             >Delete</Button>
           </List.Content>
           <List.Content verticalAlign="middle">

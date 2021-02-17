@@ -42,6 +42,7 @@ export interface IRegisteredRCE extends IBonjourServiceWithLastSeen {
 }
 
 export interface IIRCommand {
+  id: string;
   name: string;
   irCodeHex: string;
   description: string;

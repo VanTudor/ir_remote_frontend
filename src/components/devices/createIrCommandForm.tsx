@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Form } from "semantic-ui-react";
-import { createCommand, createRemoteControl } from "../../requests/requests";
+import { createCommand, createRemoteControl, deleteCommand } from "../../requests/requests";
 import { IDictionary } from "../Types";
+import { requestifyButton } from "../utils";
 
 interface ICreateIrCommandFormState {
   name: string;
@@ -13,9 +14,10 @@ const handleCreateIrCommandClick = (deviceId: string, irCodeHex: string, name: s
   await createCommand(deviceId, name, irCodeHex, description);
 }
 
-export default function CreateIrCommandForm({ irCodeHex, deviceId }: {
+export default function CreateIrCommandForm({ irCodeHex, deviceId, fetchCommands }: {
   irCodeHex: string;
   deviceId: string;
+  fetchCommands: () => Promise<void>
 }) {
   const [createIrCommandFormState, setCreateIrCommandFormState]: [ICreateIrCommandFormState, any] = useState({} as ICreateIrCommandFormState);
   const formIrCommandState = createIrCommandFormState || {};
@@ -41,7 +43,11 @@ export default function CreateIrCommandForm({ irCodeHex, deviceId }: {
           }}
         />
       </Form.Group>
-      <Form.Button fluid onClick={handleCreateIrCommandClick(deviceId, irCodeHex, formIrCommandState.name, formIrCommandState.description)}>Submit</Form.Button>
+      {/*<Form.Button fluid onClick={handleCreateIrCommandClick(deviceId, irCodeHex, formIrCommandState.name, formIrCommandState.description)}>Submit</Form.Button>*/}
+      <Form.Button fluid onClick={
+        // handleCreateIrCommandClick(deviceId, irCodeHex, formIrCommandState.name, formIrCommandState.description)
+        requestifyButton([deviceId, irCodeHex, formIrCommandState.name, formIrCommandState.description], createCommand, fetchCommands)
+      }>Submit</Form.Button>
     </Form>
   );
 }

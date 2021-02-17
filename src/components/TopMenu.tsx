@@ -1,12 +1,35 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Menu, Input, Segment, Icon } from "semantic-ui-react";
 import Devices from "./devices/Devices";
-import RemoteControlEmulatorsScanner from "./RemoteControlEmulatorsScanner";
+import RemoteControlEmulators from "./remoteControlEmulators/RemoteControlEmulators";
+import { SocketComms } from "../services/SocketComms";
 import { IBonjourServiceWithLastSeen, IDictionary } from "./Types";
 
 export default function TopMenu() {
   const defaultActiveTabName = "remoteEmulators";
   const [menuActiveItem, setMenuActiveItem] = useState(defaultActiveTabName);
+  const [registeredRCEAvailable, setRegisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
+  const [unregisteredRCEAvailable, setUnregisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
+
+  const registeredRCEAvailableRef = React.useRef(registeredRCEAvailable);
+  const unregisteredRCEAvailableRef = React.useRef(unregisteredRCEAvailable);
+  const rceListSocketComms = new SocketComms();
+  useEffect(() => {
+    console.log(registeredRCEAvailable);
+
+    const bonjourDevicesAvailableWrappedHandler = (message: IDictionary<IBonjourServiceWithLastSeen>) => {
+      rceListSocketComms.bonjourDevicesAvailableHandler(message, registeredRCEAvailableRef.current, setRegisteredRCEAvailable, unregisteredRCEAvailableRef.current, setUnregisteredRCEAvailable);
+    };
+    // @ts-ignore
+    rceListSocketComms.socket.on("BonjourDevicesAvailable", bonjourDevicesAvailableWrappedHandler);
+    return () => { rceListSocketComms.socket.off('BonjourDevicesAvailable', bonjourDevicesAvailableWrappedHandler); };
+  }, []);
+
+  useEffect(() => {
+    console.log(registeredRCEAvailable);
+    registeredRCEAvailableRef.current = registeredRCEAvailable;
+    unregisteredRCEAvailableRef.current = registeredRCEAvailable;
+  });
 
   const handleMenuClick = (e: { preventDefault: () => void }, menuItemProps: { name?: string }) => {
     e.preventDefault();
@@ -17,7 +40,10 @@ export default function TopMenu() {
   const renderActiveTab = () => {
     switch(menuActiveItem) {
       case "remoteEmulators":
-        return <RemoteControlEmulatorsScanner />;
+        return <RemoteControlEmulators
+          registeredRCEAvailable={registeredRCEAvailable}
+          unregisteredRCEAvailable={unregisteredRCEAvailable}
+        />;
       case "devices":
         return <Devices />;
       // case Devices:

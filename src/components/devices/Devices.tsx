@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Accordion, Form, Segment, Dropdown } from "semantic-ui-react";
-import { serverHost } from "../../config";
+import { Accordion, Form, Segment, Dropdown, Checkbox } from "semantic-ui-react";
+import { CheckboxProps } from "semantic-ui-react/dist/commonjs/modules/Checkbox/Checkbox";
+import { io } from "socket.io-client";
+import { serverHost, SocketIOEndpoint } from "../../config";
 import { createDevice } from "../../requests/requests";
 import Device from "./Device";
 import {
-  IDevice,
+  IDevice, IIRCodeDetectedEvent,
   IPaginatedResponse,
   IRCE
 } from "../Types";
@@ -48,6 +50,28 @@ function Devices() {
 
   useEffect(() => {
     fetchAndSaveData();
+  }, []);
+
+
+  let RCEIdDetectedCodeMap: { [k: string]: string }, setRCEIdDetectedCodeMap: any;
+  [RCEIdDetectedCodeMap, setRCEIdDetectedCodeMap] = useState({});
+  useEffect(() => {
+    const socket = io(SocketIOEndpoint, {
+      transports: ["polling", "websocket"],
+      withCredentials: true,
+      extraHeaders: {
+        "Access-Control-Allow-Origin": "*"
+      },
+      auth: { clientType: "FE" }
+    });
+    socket.on("IRCodeDetected", (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
+      console.log(IRCodeDetectedEvent);
+      setRCEIdDetectedCodeMap({
+        ...RCEIdDetectedCodeMap,
+        [IRCodeDetectedEvent.RCEId]: parseInt(IRCodeDetectedEvent.IRCode, 10).toString(16)
+      })
+    })
+    return () => { socket.disconnect() };
   }, []);
 
   const handleCreateDeviceClick = (name: string, description: string, rceId: string) => async (e: { preventDefault: () => void; }, _data: any) => {
@@ -122,23 +146,36 @@ function Devices() {
 
   return(
     <Segment>
-          <h2>List of available devices</h2>
-          <Accordion>
-            <div>
-              <Accordion.Title
-                active={createAccordionActive}
-                content={'Create device'}
-                onClick={handleAccordionClick}
-              />
-              <Accordion.Content
-                active={createAccordionActive}
-                content={CreateDeviceForm()}
-              />
-            </div>
-          </Accordion>
-          {devicesAvailable.map((device, index) => {
-            return <Device device={device} deleteConfirmCallback={fetchAndSaveData} itemIndex={index} key={index} />
-          })}
+      <h2>List of available devices</h2>
+      <Accordion>
+        <div>
+          <Accordion.Title
+            active={createAccordionActive}
+            content={'Create device'}
+            onClick={handleAccordionClick}
+          />
+          <Accordion.Content
+            active={createAccordionActive}
+            content={CreateDeviceForm()}
+          />
+        </div>
+      </Accordion>
+      <Checkbox
+        toggle
+        defaultChecked={true}
+        onChange={(event: React.FormEvent<HTMLInputElement>, data: CheckboxProps) => {
+          console.log(data.value);
+          if(data.value) {
+            // show only reachable devices
+            return;
+          }
+          // show unreachable devices too
+        }}
+        label={"Show only reachable devices"}
+      />
+      {devicesAvailable.map((device, index) => {
+        return <Device device={device} deleteConfirmCallback={fetchAndSaveData} itemIndex={index} key={index} RCEIdDetectedCodeMap={RCEIdDetectedCodeMap} />
+      })}
 
     </Segment>
   );
