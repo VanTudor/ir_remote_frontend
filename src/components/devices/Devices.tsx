@@ -4,6 +4,7 @@ import { CheckboxProps } from "semantic-ui-react/dist/commonjs/modules/Checkbox/
 import { io } from "socket.io-client";
 import { serverHost, SocketIOEndpoint } from "../../config";
 import { createDevice } from "../../requests/requests";
+import { SocketCommsService } from "../../services/SocketComms";
 import Device from "./Device";
 import {
   IDevice, IIRCodeDetectedEvent,
@@ -35,7 +36,9 @@ async function getRCEs(): Promise<IRCE[]> {
   return res.data.rows;
 }
 
-function Devices() {
+function Devices({ socketCommsService }: {
+  socketCommsService: SocketCommsService
+}) {
   const [createAccordionActive, setCreateAccordionActive]: [boolean, any] = useState(false);
   const [devicesAvailable, setDevicesAvailable]: [IDevice[], any] = useState([]);
   const [RCEsAvailable, setRCEsAvailable]: [IRCE[], any] = useState([]);
@@ -52,26 +55,17 @@ function Devices() {
     fetchAndSaveData();
   }, []);
 
-
   let RCEIdDetectedCodeMap: { [k: string]: string }, setRCEIdDetectedCodeMap: any;
   [RCEIdDetectedCodeMap, setRCEIdDetectedCodeMap] = useState({});
   useEffect(() => {
-    const socket = io(SocketIOEndpoint, {
-      transports: ["polling", "websocket"],
-      withCredentials: true,
-      extraHeaders: {
-        "Access-Control-Allow-Origin": "*"
-      },
-      auth: { clientType: "FE" }
-    });
-    socket.on("IRCodeDetected", (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
+    socketCommsService.socket.on("IRCodeDetected", (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
       console.log(IRCodeDetectedEvent);
       setRCEIdDetectedCodeMap({
         ...RCEIdDetectedCodeMap,
         [IRCodeDetectedEvent.RCEId]: parseInt(IRCodeDetectedEvent.IRCode, 10).toString(16)
       })
     })
-    return () => { socket.disconnect() };
+    return () => { socketCommsService.socket.disconnect() };
   }, []);
 
   const handleCreateDeviceClick = (name: string, description: string, rceId: string) => async (e: { preventDefault: () => void; }, _data: any) => {

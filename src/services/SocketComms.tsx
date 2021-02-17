@@ -5,7 +5,7 @@ import { stringBoolToBool } from "../utils";
 import { IBonjourServiceWithLastSeen, IDictionary } from "../components/Types";
 
 
-export class SocketComms {
+export class SocketCommsService {
   public socket: Socket;
   constructor() {
     this.socket = io(SocketIOEndpoint, {

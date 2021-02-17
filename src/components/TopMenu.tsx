@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Menu, Input, Segment, Icon } from "semantic-ui-react";
 import Devices from "./devices/Devices";
 import RemoteControlEmulators from "./remoteControlEmulators/RemoteControlEmulators";
-import { SocketComms } from "../services/SocketComms";
+import { SocketCommsService } from "../services/SocketComms";
 import { IBonjourServiceWithLastSeen, IDictionary } from "./Types";
 
 export default function TopMenu() {
@@ -13,16 +13,16 @@ export default function TopMenu() {
 
   const registeredRCEAvailableRef = React.useRef(registeredRCEAvailable);
   const unregisteredRCEAvailableRef = React.useRef(unregisteredRCEAvailable);
-  const rceListSocketComms = new SocketComms();
+  const socketCommsService = new SocketCommsService();
   useEffect(() => {
     console.log(registeredRCEAvailable);
 
     const bonjourDevicesAvailableWrappedHandler = (message: IDictionary<IBonjourServiceWithLastSeen>) => {
-      rceListSocketComms.bonjourDevicesAvailableHandler(message, registeredRCEAvailableRef.current, setRegisteredRCEAvailable, unregisteredRCEAvailableRef.current, setUnregisteredRCEAvailable);
+      socketCommsService.bonjourDevicesAvailableHandler(message, registeredRCEAvailableRef.current, setRegisteredRCEAvailable, unregisteredRCEAvailableRef.current, setUnregisteredRCEAvailable);
     };
     // @ts-ignore
-    rceListSocketComms.socket.on("BonjourDevicesAvailable", bonjourDevicesAvailableWrappedHandler);
-    return () => { rceListSocketComms.socket.off('BonjourDevicesAvailable', bonjourDevicesAvailableWrappedHandler); };
+    socketCommsService.socket.on("BonjourDevicesAvailable", bonjourDevicesAvailableWrappedHandler);
+    return () => { socketCommsService.socket.off('BonjourDevicesAvailable', bonjourDevicesAvailableWrappedHandler); };
   }, []);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function TopMenu() {
           unregisteredRCEAvailable={unregisteredRCEAvailable}
         />;
       case "devices":
-        return <Devices />;
+        return <Devices socketCommsService={socketCommsService} />;
       // case Devices:
       //   return "Not yet.";
       default:

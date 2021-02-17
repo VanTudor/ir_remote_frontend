@@ -40,8 +40,6 @@ function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback
     }
   }
 
-
-
   return (
     <Segment key={itemIndex}>
       <List>
