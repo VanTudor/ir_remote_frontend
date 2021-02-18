@@ -1,32 +1,46 @@
-import React, { useEffect, useState } from "react";
-import { Menu, Input, Segment, Icon } from "semantic-ui-react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Menu, Segment, Icon } from "semantic-ui-react";
 import Devices from "./devices/Devices";
 import RemoteControlEmulators from "./remoteControlEmulators/RemoteControlEmulators";
 import { SocketCommsService } from "../services/SocketComms";
-import { IBonjourServiceWithLastSeen, IDictionary } from "./Types";
+import { IBonjourServiceWithLastSeen, IDictionary, IIRCodeDetectedEvent } from "./Types";
 
 export default function TopMenu() {
   const defaultActiveTabName = "remoteEmulators";
   const [menuActiveItem, setMenuActiveItem] = useState(defaultActiveTabName);
   const [registeredRCEAvailable, setRegisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
   const [unregisteredRCEAvailable, setUnregisteredRCEAvailable]: [IDictionary<IBonjourServiceWithLastSeen>, any] = useState({});
+  const [RCEIdDetectedCodeMap, setRCEIdDetectedCodeMap]: [{ [k: string]: string }, Dispatch<SetStateAction<{ [k: string]: string }>>] = useState({});
 
-  const registeredRCEAvailableRef = React.useRef(registeredRCEAvailable);
-  const unregisteredRCEAvailableRef = React.useRef(unregisteredRCEAvailable);
+  const [registeredRCEAvailableRef,
+    unregisteredRCEAvailableRef,
+    RCEIdDetectedCodeMapRef,
+  ] = [
+    React.useRef(registeredRCEAvailable),
+    React.useRef(unregisteredRCEAvailable),
+    React.useRef(RCEIdDetectedCodeMap)
+  ];
   const socketCommsService = new SocketCommsService();
 
   const bonjourDevicesAvailableWrappedHandler = (message: IDictionary<IBonjourServiceWithLastSeen>) => {
     socketCommsService.bonjourDevicesAvailableHandler(message, registeredRCEAvailableRef.current, setRegisteredRCEAvailable, unregisteredRCEAvailableRef.current, setUnregisteredRCEAvailable);
   };
+  const irCodeDetectedWrappedHandler = (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
+  socketCommsService.irCodeDetectedHandler(IRCodeDetectedEvent, RCEIdDetectedCodeMapRef.current, setRCEIdDetectedCodeMap);
+  }
+
   useEffect(() => {
     // @ts-ignore
     socketCommsService.socket.on("BonjourDevicesAvailable", bonjourDevicesAvailableWrappedHandler);
+    socketCommsService.socket.on("IRCodeDetected", irCodeDetectedWrappedHandler);
+
     return () => { socketCommsService.socket.off('BonjourDevicesAvailable', bonjourDevicesAvailableWrappedHandler); };
   }, []);
 
   useEffect(() => {
     registeredRCEAvailableRef.current = registeredRCEAvailable;
     unregisteredRCEAvailableRef.current = registeredRCEAvailable;
+    RCEIdDetectedCodeMapRef.current = RCEIdDetectedCodeMap;
   });
 
   const handleMenuClick = (e: { preventDefault: () => void }, menuItemProps: { name?: string }) => {
@@ -43,7 +57,10 @@ export default function TopMenu() {
           unregisteredRCEAvailable={unregisteredRCEAvailable}
         />;
       case "devices":
-        return <Devices socketCommsService={socketCommsService} onlineRCEIdsList={Object.keys(registeredRCEAvailable)} />;
+        return <Devices
+          onlineRCEIdsList={Object.keys(registeredRCEAvailable)}
+          RCEIdDetectedCodeMap={RCEIdDetectedCodeMap}
+        />;
       // case Devices:
       //   return "Not yet.";
       default:

@@ -1,8 +1,9 @@
+import { Dispatch, SetStateAction } from "react";
 import { io } from "socket.io-client";
 import { Socket } from "socket.io-client/build/socket";
 import { SocketIOEndpoint } from "../config";
 import { stringBoolToBool } from "../utils";
-import { IBonjourServiceWithLastSeen, IDictionary } from "../components/Types";
+import { IBonjourServiceWithLastSeen, IDevice, IDictionary, IIRCodeDetectedEvent } from "../components/Types";
 
 
 export class SocketCommsService {
@@ -18,7 +19,13 @@ export class SocketCommsService {
     });
   }
 
-  public bonjourDevicesAvailableHandler(visibleRCEDeviceDictionary: IDictionary<IBonjourServiceWithLastSeen>, registeredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>, setRegisteredRCEAvailable: any, unregisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>, setUnregisteredRCEAvailable: any) {
+  public bonjourDevicesAvailableHandler(
+    visibleRCEDeviceDictionary: IDictionary<IBonjourServiceWithLastSeen>,
+    registeredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>,
+    setRegisteredRCEAvailable: Dispatch<SetStateAction<IDictionary<IBonjourServiceWithLastSeen>>>,
+    unregisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen>,
+    setUnregisteredRCEAvailable: Dispatch<SetStateAction<IDictionary<IBonjourServiceWithLastSeen>>>
+  ) {
     let newRegisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen> = {};
     let newUnregisteredRCEAvailable: IDictionary<IBonjourServiceWithLastSeen> = {};
     Object.keys(visibleRCEDeviceDictionary).forEach(k => {
@@ -40,4 +47,14 @@ export class SocketCommsService {
       ...newUnregisteredRCEAvailable
     });
   }
+
+  public irCodeDetectedHandler(
+    IRCodeDetectedEvent: IIRCodeDetectedEvent,
+    RCEIdDetectedCodeMap: { [k: string]: string },
+    setRCEIdDetectedCodeMap: Dispatch<SetStateAction<{ [k: string]: string }>>,
+  ) {
+    setRCEIdDetectedCodeMap({
+      ...RCEIdDetectedCodeMap,
+      [IRCodeDetectedEvent.RCEId]: parseInt(IRCodeDetectedEvent.IRCode, 10).toString(16)
+    })};
 }

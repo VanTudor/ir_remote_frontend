@@ -1,12 +1,11 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Accordion, Form, Segment, Dropdown, Checkbox } from "semantic-ui-react";
 import { CheckboxProps } from "semantic-ui-react/dist/commonjs/modules/Checkbox/Checkbox";
-import { serverHost, SocketIOEndpoint } from "../../config";
+import { serverHost } from "../../config";
 import { createDevice } from "../../requests/requests";
-import { SocketCommsService } from "../../services/SocketComms";
 import Device from "./Device";
 import {
-  IDevice, IIRCodeDetectedEvent,
+  IDevice,
   IPaginatedResponse,
   IRCE
 } from "../Types";
@@ -18,12 +17,7 @@ interface IRegisterDeviceFormState {
   remoteControlEmulatorId: string;
 }
 
-
-// (key, emulatorIndex) => generateDevice(espDevicesAvailable[key], emulatorIndex)
 async function getDevices(rceId?: string): Promise<IDevice[]> {
-    if (typeof rceId !== undefined) {
-      // TODO: add rceId based filtering in BE and here
-    }
     const res = await axios.get<IPaginatedResponse<IDevice>>(`${serverHost}/devices?skipFirst=${0}&maxResultsLength=100`);
     return res.data.rows;
 }
@@ -33,9 +27,12 @@ async function getRCEs(): Promise<IRCE[]> {
   return res.data.rows;
 }
 
-function Devices({ socketCommsService, onlineRCEIdsList }: {
-  socketCommsService: SocketCommsService,
-  onlineRCEIdsList: string[]
+function Devices({
+                   onlineRCEIdsList,
+                   RCEIdDetectedCodeMap
+}: {
+  onlineRCEIdsList: string[];
+  RCEIdDetectedCodeMap: { [_k: string]: string }
 }) {
   const [showUnreachableDevices, setShowUnreachableDevices]: [boolean, Dispatch<SetStateAction<boolean>>] = useState<boolean>(false);
   const [createAccordionActive, setCreateAccordionActive]: [boolean, Dispatch<SetStateAction<boolean>>] = useState<boolean>(false);
@@ -51,7 +48,7 @@ function Devices({ socketCommsService, onlineRCEIdsList }: {
 
   async function fetchAndSaveData() {
     let allDevices = await getDevices();
-    const rces = await getRCEs();
+    const RCEs = await getRCEs();
     const reachable: IDevice[] = [];
     const unreachable: IDevice[] = [];
     allDevices.forEach(device => {
@@ -59,26 +56,13 @@ function Devices({ socketCommsService, onlineRCEIdsList }: {
       isReachable ? reachable.push(device) : unreachable.push(device);
     });
 
-    setRCEsAvailable(rces);
+    setRCEsAvailable(RCEs);
     setDevicesReachable(reachable);
     setDevicesUnreachable(unreachable);
   }
 
   useEffect(() => {
     fetchAndSaveData();
-  }, []);
-
-  let RCEIdDetectedCodeMap: { [k: string]: string }, setRCEIdDetectedCodeMap: any;
-  [RCEIdDetectedCodeMap, setRCEIdDetectedCodeMap] = useState({});
-  useEffect(() => {
-    socketCommsService.socket.on("IRCodeDetected", (IRCodeDetectedEvent: IIRCodeDetectedEvent) => {
-      console.log(IRCodeDetectedEvent);
-      setRCEIdDetectedCodeMap({
-        ...RCEIdDetectedCodeMap,
-        [IRCodeDetectedEvent.RCEId]: parseInt(IRCodeDetectedEvent.IRCode, 10).toString(16)
-      })
-    })
-    return () => { socketCommsService.socket.disconnect() };
   }, []);
 
   const handleCreateDeviceClick = (name: string, description: string, rceId: string) => async (e: { preventDefault: () => void; }, _data: any) => {
@@ -170,7 +154,7 @@ function Devices({ socketCommsService, onlineRCEIdsList }: {
       <Checkbox
         toggle
         defaultChecked={showUnreachableDevices}
-        onChange={async (event: React.FormEvent<HTMLInputElement>, data: CheckboxProps) => {
+        onChange={async (_event: React.FormEvent<HTMLInputElement>, _data: CheckboxProps) => {
           await fetchAndSaveData();
           setShowUnreachableDevices(!showUnreachableDevices);
         }}
