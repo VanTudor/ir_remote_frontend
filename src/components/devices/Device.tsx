@@ -12,11 +12,12 @@ const fetchAndUpdateCommandsList = async (deviceId: string, setAvailableCommands
   setAvailableCommands(irCommands);
 }
 
-function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback }: {
-  device: IDevice,
-  itemIndex: number,
-  RCEIdDetectedCodeMap: { [k: string]: string }
-  deleteConfirmCallback: () => Promise<any>
+function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback, reachable = true}: {
+  device: IDevice;
+  itemIndex: number;
+  RCEIdDetectedCodeMap: { [k: string]: string };
+  deleteConfirmCallback: () => Promise<any>;
+  reachable?: boolean;
 }) {
 
   const [availableCommands, setAvailableCommands]: [IIRCommand[], any] = useState([]);
@@ -47,8 +48,10 @@ function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback
           <List.Content>
             <List.Header>Name: {device.name}</List.Header>
             <ButtonGroup floated={"right"}>
-              <Button
-                color={"blue"}>Edit</Button>
+              <Button color={"blue"}
+                      disabled={!reachable}>
+                Edit
+              </Button>
               {/*<Button*/}
               {/*  color={"red"}*/}
               {/*  onClick={handleOpenDeletePanelClick(device)}*/}
@@ -58,6 +61,7 @@ function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback
                 extraConfirmText="Deleting this will also remove all associated IR commands."
                 deleteMethod={() => deleteDevice(device.id)}
                 deleteConfirmCallback={deleteConfirmCallback}
+                disabled={!reachable}
               />
             </ButtonGroup>
             <List.Description>Description: {device.description}</List.Description>

@@ -14,19 +14,17 @@ export default function TopMenu() {
   const registeredRCEAvailableRef = React.useRef(registeredRCEAvailable);
   const unregisteredRCEAvailableRef = React.useRef(unregisteredRCEAvailable);
   const socketCommsService = new SocketCommsService();
-  useEffect(() => {
-    console.log(registeredRCEAvailable);
 
-    const bonjourDevicesAvailableWrappedHandler = (message: IDictionary<IBonjourServiceWithLastSeen>) => {
-      socketCommsService.bonjourDevicesAvailableHandler(message, registeredRCEAvailableRef.current, setRegisteredRCEAvailable, unregisteredRCEAvailableRef.current, setUnregisteredRCEAvailable);
-    };
+  const bonjourDevicesAvailableWrappedHandler = (message: IDictionary<IBonjourServiceWithLastSeen>) => {
+    socketCommsService.bonjourDevicesAvailableHandler(message, registeredRCEAvailableRef.current, setRegisteredRCEAvailable, unregisteredRCEAvailableRef.current, setUnregisteredRCEAvailable);
+  };
+  useEffect(() => {
     // @ts-ignore
     socketCommsService.socket.on("BonjourDevicesAvailable", bonjourDevicesAvailableWrappedHandler);
     return () => { socketCommsService.socket.off('BonjourDevicesAvailable', bonjourDevicesAvailableWrappedHandler); };
   }, []);
 
   useEffect(() => {
-    console.log(registeredRCEAvailable);
     registeredRCEAvailableRef.current = registeredRCEAvailable;
     unregisteredRCEAvailableRef.current = registeredRCEAvailable;
   });
@@ -45,7 +43,7 @@ export default function TopMenu() {
           unregisteredRCEAvailable={unregisteredRCEAvailable}
         />;
       case "devices":
-        return <Devices socketCommsService={socketCommsService} />;
+        return <Devices socketCommsService={socketCommsService} onlineRCEIdsList={Object.keys(registeredRCEAvailable)} />;
       // case Devices:
       //   return "Not yet.";
       default:

@@ -105,14 +105,11 @@ function RemoteControlEmulators({ registeredRCEAvailable, unregisteredRCEAvailab
         <Grid columns={2} relaxed="very">
           <Grid.Column>
             <h2>List of registered devices</h2>
-            {Object.keys(registeredRCEAvailable).map((k, index) => {
-              // console.log(registeredRCEAvailableRef);
-              return generateDevice(registeredRCEAvailable[k], index);
-            })}
+            {Object.values(registeredRCEAvailable).map(generateDevice)}
           </Grid.Column>
           <Grid.Column>
             <h2>List of unregistered devices</h2>
-            {Object.keys(unregisteredRCEAvailable).map((k, index) => generateDevice(unregisteredRCEAvailable[k], index))}
+            {Object.values(unregisteredRCEAvailable).map(generateDevice)}
           </Grid.Column>
         </Grid>
 
