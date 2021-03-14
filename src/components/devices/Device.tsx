@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
-import { Accordion, Button, ButtonGroup, Icon, List, Segment } from "semantic-ui-react";
+import { Accordion, Button, ButtonGroup, Dimmer, Icon, List, Segment } from "semantic-ui-react";
 
 import { deleteDevice, getCommands } from "../../requests/requests";
 import DeleteByIdButtonWithConfirm from "../common/DeleteByIdButtonWithConfirm";
@@ -20,6 +20,7 @@ function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback
   reachable?: boolean;
 }) {
 
+  const [dimmed, setDimmned]: [boolean, Dispatch<SetStateAction<boolean>>] = useState<boolean>(false);
   const [availableCommands, setAvailableCommands]: [IIRCommand[], any] = useState([]);
   const [commandsAccordionOpenMap, setCommandsAccordionOpenMap]: [IDictionary<boolean>, Dispatch<SetStateAction<{}>>] = useState({});
   const [irCodesAccordionMap, setIrCodesAccordionMap]: [IDictionary<boolean>, Dispatch<SetStateAction<{}>>] = useState({});
@@ -42,7 +43,7 @@ function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback
   }
 
   return (
-    <Segment key={itemIndex}>
+    <Dimmer.Dimmable key={itemIndex}>
       <List>
         <List.Item>
           <List.Content>
@@ -116,7 +117,7 @@ function Device({ device, itemIndex, RCEIdDetectedCodeMap, deleteConfirmCallback
         </List.Item>
       </List>
       {/*{stringBoolToBool(espDevice.txt.registered) && <Button color="red">Delete</Button>}*/}
-    </Segment>
+    </Dimmer.Dimmable>
   );
 }
 
