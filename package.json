@@ -1,31 +1,19 @@
 {
-  "name": "frontend",
+  "name": "rce-fe",
   "version": "0.1.0",
   "private": true,
+  "description": "Remote Control Emulator (RCE) front-end",
   "dependencies": {
-    "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
-    "@types/faker": "^4.1.12",
-    "@types/jest": "^24.0.0",
-    "@types/match-sorter": "^4.0.0",
-    "@types/node": "^12.0.0",
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
-    "@types/socket.io": "^2.1.11",
-    "@types/styled-components": "^5.1.2",
     "axios": "^0.19.2",
-    "faker": "^4.1.0",
-    "match-sorter": "^4.2.0",
     "react": "^16.13.1",
-    "react-data-table-component": "^6.11.0",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.3",
-    "react-table": "^7.5.0",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^1.2.1",
     "socket.io-client": "^3.1.0",
-    "styled-components": "^5.1.1",
     "typescript": "~3.7.2"
   },
   "scripts": {
@@ -48,8 +36,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@types/react-table": "^7.0.22"
   }
 }
